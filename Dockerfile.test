@@ -1,0 +1,19 @@
+# Test Dockerfile for running tests in containerized environment
+FROM rust:latest
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy source code
+COPY . .
+
+# Build the project in test mode
+RUN cargo build --tests
+
+# Default command to run tests
+CMD ["cargo", "test", "--", "--nocapture"]
