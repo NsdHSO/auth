@@ -17,6 +17,7 @@ pub enum TokenType {
     EmailVerification,
 }
 
+#[allow(dead_code)]
 impl TokenType {
     pub fn as_str(&self) -> &'static str {
         match self {

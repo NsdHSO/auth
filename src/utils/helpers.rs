@@ -1,16 +1,18 @@
-use crate::http_response::error_handler::CustomError;
-use crate::http_response::HttpCodeW;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use chrono_tz::Europe;
 use nanoid::nanoid;
 use sea_orm::DbErr;
 
+use crate::http_response::{error_handler::CustomError, HttpCodeW};
+
 /// Generates a random ID for authentication purposes
+#[allow(dead_code)]
 pub fn generate_auth_id() -> String {
     nanoid!(32) // Generate a 32-character ID for secure authentication
 }
 
 /// Generates a secure token for authentication
+#[allow(dead_code)]
 pub fn generate_secure_token() -> String {
     nanoid!(64, &[
         'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -55,6 +57,7 @@ pub fn generate_secure_token() -> String {
 ///     return final_result;
 /// }
 /// ```
+#[allow(dead_code)]
 pub fn check_if_is_duplicate_key_from_data_base<T>(
     attempts: &mut usize,
     result: Result<T, DbErr>,
@@ -80,6 +83,7 @@ pub fn check_if_is_duplicate_key_from_data_base<T>(
     }
 }
 
+#[allow(dead_code)]
 pub fn now_time() -> NaiveDateTime {
     chrono::Utc::now()
         .with_timezone(&Europe::Bucharest)
@@ -106,6 +110,7 @@ pub fn now_time() -> NaiveDateTime {
 /// ```rust
 /// let date = parse_date("2025-07-22 14:30:00")?;
 /// ```
+#[allow(dead_code)]
 pub fn parse_date(date_str: &str) -> Result<DateTime<Utc>, CustomError> {
     // Try parsing as standard format "YYYY-MM-DD HH:MM:SS"
     if let Ok(naive) = NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S") {
@@ -137,12 +142,14 @@ pub fn parse_date(date_str: &str) -> Result<DateTime<Utc>, CustomError> {
 }
 
 /// Validates an email address format
+#[allow(dead_code)]
 pub fn validate_email(email: &str) -> bool {
     let email_regex = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
     email_regex.is_match(email)
 }
 
 /// Validates password strength
+#[allow(dead_code)]
 pub fn validate_password(password: &str) -> Result<(), CustomError> {
     if password.len() < 8 {
         return Err(CustomError::new(
@@ -176,6 +183,7 @@ pub fn validate_password(password: &str) -> Result<(), CustomError> {
 }
 
 /// Generates a salt for password hashing
+#[allow(dead_code)]
 pub fn generate_salt() -> String {
     nanoid!(16)
 }

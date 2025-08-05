@@ -8,11 +8,11 @@ use env_logger::{Builder, Env};
 use listenfd::ListenFd;
 use std::env;
 
+mod components;
 mod db;
 mod entity;
 mod http_response;
 mod utils;
-mod components;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {

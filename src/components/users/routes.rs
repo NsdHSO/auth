@@ -5,12 +5,12 @@ use sea_orm::DatabaseConnection;
 
 #[post("/users")]
 pub async fn users(
-    service: web::Data<UsersService>,
+    _service: web::Data<UsersService>,
     db_conn: web::Data<DatabaseConnection>,
 ) -> Result<HttpResponse, CustomError> {
-    let service_instance = UsersService::new(db_conn.get_ref());
+    let _service_instance = UsersService::new(db_conn.get_ref());
 
-    Ok(HttpResponse::Ok().body({}))
+    Ok(HttpResponse::Ok().body(()))
 }
 
 pub fn init_routes(config: &mut web::ServiceConfig) {

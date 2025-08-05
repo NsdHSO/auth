@@ -1,12 +1,13 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Serialize, Deserialize, Default)]
 #[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "user_role")]
 pub enum UserRole {
     #[sea_orm(string_value = "ADMIN")]
     Admin,
     #[sea_orm(string_value = "USER")]
+    #[default]
     User,
     #[sea_orm(string_value = "MODERATOR")]
     Moderator,
@@ -14,12 +15,7 @@ pub enum UserRole {
     Guest,
 }
 
-impl Default for UserRole {
-    fn default() -> Self {
-        UserRole::User
-    }
-}
-
+#[allow(dead_code)]
 impl UserRole {
     pub fn as_str(&self) -> &'static str {
         match self {
