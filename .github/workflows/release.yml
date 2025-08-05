@@ -1,0 +1,81 @@
+name: Semantic Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+# Sets permissions of the GH_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write    # This is required for creating releases and pushing tags
+  issues: write      # This is required for creating issues
+  pull-requests: write # This is required if you want to comment on PRs
+
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      
+      - name: Install dependencies
+        run: npm install -g semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/exec conventional-changelog-conventionalcommits lodash
+      
+      # Create or update repository URL for proper access
+      - name: Set Git credentials
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+      
+      - name: Create .releaserc file
+        run: |
+          cat > .releaserc.json << 'EOF'
+          {
+            "branches": ["main", "master"],
+            "plugins": [
+              "@semantic-release/commit-analyzer",
+              "@semantic-release/release-notes-generator",
+              "@semantic-release/changelog",
+              ["@semantic-release/exec", {
+                "prepareCmd": "perl -i -pe 's/^version = \"[^\"]*\"/version = \"${nextRelease.version}\"/g' Cargo.toml"
+              }],
+              ["@semantic-release/github", {
+                "assets": [
+                  {"path": "target/release/emergency", "label": "Binary (Linux)"}
+                ]
+              }],
+              ["@semantic-release/git", {
+                "assets": ["CHANGELOG.md", "Cargo.toml", "Cargo.lock"],
+                "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+              }]
+            ]
+          }
+          EOF
+      
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+      
+      - name: Build release binary
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release
+      
+      - name: Semantic Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: npx semantic-release
