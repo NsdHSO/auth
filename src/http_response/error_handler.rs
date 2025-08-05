@@ -1,15 +1,44 @@
-use actix_web::http::StatusCode;
-use actix_web::{HttpResponse, ResponseError};
+use actix_web::{
+    dev::Payload,
+    error::{JsonPayloadError},
+    web,
+    FromRequest,
+    HttpRequest,
+    HttpResponse,
+    ResponseError,
+    http::StatusCode,
+};
+use futures_util::future::{LocalBoxFuture, ready};
 use sea_orm::DbErr;
-// Import SeaORM's database error type
 use serde::{Deserialize, Serialize};
 use std::error::Error as StdError;
 use std::fmt;
-// Import this
 
-use crate::http_response::{HttpCodeW, create_response};
-// Import logging macros
+// Assuming you have this module for your custom HTTP response.
+// This is not provided, but is necessary for the code to compile.
+// For example:
+//
+// mod http_response {
+//     use serde::Serialize;
+//     #[derive(Debug, Serialize)]
+//     pub struct ResponseObject {
+//         pub message: String,
+//     }
+//     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+//     pub enum HttpCodeW {
+//         BadRequest = 400,
+//         NotFound = 404,
+//         InternalServerError = 500,
+//     }
+//     pub fn create_response(message: String, _code: HttpCodeW) -> ResponseObject {
+//         ResponseObject { message }
+//     }
+// }
+//
+use crate::http_response::{create_response, HttpCodeW};
 
+// This is your CustomError struct and its implementations.
+// It is now integrated into the document.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CustomError {
     pub error_status_code: HttpCodeW,
@@ -98,3 +127,48 @@ impl ResponseError for CustomError {
         HttpResponse::build(status_code).json(response_object)
     }
 }
+
+// Our custom extractor struct. It's generic over the inner type `T`.
+pub struct ValidatedJson<T>(pub T);
+
+// Implement the `FromRequest` trait for our new `ValidatedJson` struct.
+// This is what makes it an Actix-Web extractor.
+impl<T: serde::de::DeserializeOwned + 'static> FromRequest for ValidatedJson<T> {
+    // The type of error this extractor can return.
+    // We will return our `CustomError` type.
+    type Error = CustomError;
+    // The type of future this method returns. We use LocalBoxFuture to handle
+    // the async nature of the standard `web::Json` extractor.
+    type Future = LocalBoxFuture<'static, Result<Self, Self::Error>>;
+
+    // This is the main function that handles the extraction logic.
+    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
+        // Use the standard `web::Json` extractor internally.
+        let json_fut = web::Json::<T>::from_request(req, payload);
+
+        // We wrap the logic in a box to satisfy the `LocalBoxFuture` type.
+        Box::pin(async move {
+            // Await the result of the `web::Json` extractor.
+            match json_fut.await {
+                Ok(json) => {
+                    // If successful, wrap the value in our custom struct.
+                    Ok(ValidatedJson(json.into_inner()))
+                }
+                Err(err) => {
+                    // If it's a deserialization error, convert it to our
+                    // custom error type.
+                    let message = match err {
+                        _ => format!("JSON payload error: {}", err),
+                    };
+                    // Return a `CustomError` with a 400 Bad Request status.
+                    Err(CustomError::new(
+                        HttpCodeW::BadRequest,
+                        message,
+                    ))
+                }
+            }
+        })
+    }
+}
+
+

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::entity::enums::{UserRole, UserStatus};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "users")]
+#[sea_orm(table_name = "users", schema_name = "auth")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
@@ -57,7 +57,6 @@ impl Related<super::sessions::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[allow(dead_code)]
 impl Model {
     /// Get the user's full name
     pub fn full_name(&self) -> String {
@@ -107,4 +106,13 @@ impl Model {
     pub fn needs_email_verification(&self) -> bool {
         !self.email_verified && matches!(self.status, UserStatus::PendingVerification)
     }
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+pub struct RegisterRequestBody {
+    pub email: String,
+    pub username: String,
+    pub password: String,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
 }

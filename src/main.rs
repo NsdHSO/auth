@@ -7,6 +7,8 @@ use dotenv::dotenv;
 use env_logger::{Builder, Env};
 use listenfd::ListenFd;
 use std::env;
+use crate::components::auth::AuthService;
+use crate::components::users::UsersService;
 
 mod components;
 mod db;
@@ -20,7 +22,7 @@ async fn main() -> std::io::Result<()> {
     let conn: sea_orm::DatabaseConnection = db::config::init()
         .await
         .expect("Failed to initialize database connection"); // Initialize connection here
-    
+
     Builder::from_env(Env::default().default_filter_or("debug"))
         .format(|buf, record| {
             use std::io::Write;
@@ -35,8 +37,10 @@ async fn main() -> std::io::Result<()> {
             )
         })
         .init();
-    
+
     let data_base_conn = conn.clone();
+    let user_service = UsersService::new(&data_base_conn.clone());
+    let auth_service = AuthService::new(&data_base_conn.clone(), &user_service.clone());
 
     let mut listened = ListenFd::from_env();
     let mut server = HttpServer::new(move || {
@@ -54,10 +58,13 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(cors)
             .app_data(web::Data::new(data_base_conn.clone()))
+            .app_data(web::Data::new(user_service.clone()))
+            .app_data(web::Data::new(auth_service.clone()))
             .wrap(Logger::default())
             .service(
                 web::scope("/v1")
                     .configure(components::users::init_routes)
+                    .configure(components::auth::init_routes),
             )
     });
 
