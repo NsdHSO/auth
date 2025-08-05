@@ -12,6 +12,7 @@ mod db;
 mod entity;
 mod http_response;
 mod utils;
+mod components;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -56,8 +57,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .service(
                 web::scope("/v1")
-                    // Add your auth routes here
-                    .route("/auth", web::get().to(|| async { "Auth service is healthy" }))
+                    .configure(components::users::init_routes)
             )
     });
 
