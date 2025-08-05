@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/NsdHSO/auth/compare/v1.0.0...v1.1.0) (2025-08-05)
+
+
+### Features
+
+* 🎸 added auth component ([7665b94](https://github.com/NsdHSO/auth/commit/7665b948ebec80f5419cebc743b85d06783060ee))
+
 # 1.0.0 (2025-08-05)
 
 
