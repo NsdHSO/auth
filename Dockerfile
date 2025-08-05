@@ -18,5 +18,5 @@ RUN apt-get update && apt-get install -y libssl3 ca-certificates && rm -rf /var/
 WORKDIR /app
 COPY --from=builder /usr/src/app/target/release/auth .
 
-EXPOSE 5000
+EXPOSE 4100
 CMD ["./auth"]
