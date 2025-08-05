@@ -324,6 +324,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "auth-scripts"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "uuid",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1019,18 +1031,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "589533453244b0995c858700322199b2becb13b627df2851f64a2775d024abcf"
 dependencies = [
  "windows-sys 0.59.0",
-]
-
-[[package]]
-name = "hospital-scripts"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "uuid",
 ]
 
 [[package]]
