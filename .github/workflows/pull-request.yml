@@ -23,13 +23,13 @@ jobs:
           context: .
           push: false
           load: true
-          tags: hospital:pr-${{ github.event.pull_request.number }}
+          tags: auth:pr-${{ github.event.pull_request.number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
       - name: Verify Docker image
         run: |
-          docker image inspect hospital:pr-${{ github.event.pull_request.number }}
+          docker image inspect auth:pr-${{ github.event.pull_request.number }}
           echo "✅ Docker image built successfully"
 
   test-lint:

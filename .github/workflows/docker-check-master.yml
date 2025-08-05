@@ -26,12 +26,12 @@ jobs:
           context: .
           push: false
           load: true
-          tags: hospital:test
+          tags: auth:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
       
       - name: Verify Docker image
         run: |
-          docker image inspect hospital:test
+          docker image inspect auth:test
           echo "✅ Docker image built successfully"
 
