@@ -115,6 +115,8 @@ Content-Type: application/json
 - **Usage**: Use to obtain new access tokens
 - **Storage**: Store securely (httpOnly cookie recommended)
 
+📖 **For detailed token management documentation, see:** [Token Management Guide](../token_management.md)
+
 ## Security Considerations
 - Passwords are hashed using bcrypt with cost factor 12
 - Refresh tokens are stored hashed in database
