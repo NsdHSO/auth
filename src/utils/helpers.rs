@@ -1,9 +1,9 @@
-use crate::error_handler::CustomError;
-use crate::http_response::HttpCodeW;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use chrono_tz::Europe;
 use nanoid::nanoid;
 use sea_orm::DbErr;
+
+use crate::http_response::{error_handler::CustomError, HttpCodeW};
 
 /// Generates a random ID for authentication purposes
 #[allow(dead_code)]

@@ -11,7 +11,6 @@ use std::env;
 mod components;
 mod db;
 mod entity;
-mod error_handler;
 mod http_response;
 mod utils;
 

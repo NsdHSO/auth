@@ -1,5 +1,5 @@
 use super::services::UsersService;
-use crate::error_handler::CustomError;
+use crate::http_response::error_handler::CustomError;
 use actix_web::{post, web, HttpResponse};
 use sea_orm::DatabaseConnection;
 
