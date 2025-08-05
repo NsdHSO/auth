@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/NsdHSO/auth/compare/v1.1.0...v1.2.0) (2025-08-05)
+
+
+### Features
+
+* 🎸 added validate json for intercept plain string in error http ([1ec132c](https://github.com/NsdHSO/auth/commit/1ec132c61d90c709546251e9c63dcf3028d5733d))
+
 # [1.1.0](https://github.com/NsdHSO/auth/compare/v1.0.0...v1.1.0) (2025-08-05)
 
 
