@@ -17,6 +17,7 @@ pub enum UserStatus {
     PendingVerification,
 }
 
+#[allow(dead_code)]
 impl UserStatus {
     pub fn is_active(&self) -> bool {
         matches!(self, UserStatus::Active)

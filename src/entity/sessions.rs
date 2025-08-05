@@ -45,6 +45,7 @@ impl Related<super::users::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
+#[allow(dead_code)]
 impl Model {
     /// Check if the session is expired
     pub fn is_expired(&self) -> bool {
@@ -84,7 +85,7 @@ impl Model {
 
     /// Check if the session was created from the same IP
     pub fn is_same_ip(&self, ip: &str) -> bool {
-        self.ip_address.as_ref().map_or(false, |session_ip| session_ip == ip)
+        self.ip_address.as_ref().is_some_and(|session_ip| session_ip == ip)
     }
 
     /// Get session duration in minutes since creation

@@ -57,11 +57,12 @@ impl Related<super::sessions::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
+#[allow(dead_code)]
 impl Model {
     /// Get the user's full name
     pub fn full_name(&self) -> String {
         match (&self.first_name, &self.last_name) {
-            (Some(first), Some(last)) => format!("{} {}", first, last),
+            (Some(first), Some(last)) => format!("{first} {last}"),
             (Some(first), None) => first.clone(),
             (None, Some(last)) => last.clone(),
             (None, None) => self.username.clone(),

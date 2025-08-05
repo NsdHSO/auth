@@ -1,6 +1,8 @@
-use sea_orm::{DatabaseConnection, DbErr};
+use sea_orm::DatabaseConnection;
 
+#[allow(dead_code)]
 pub struct UsersService {
+    #[allow(dead_code)]
     conn: DatabaseConnection,
 }
 

@@ -45,6 +45,7 @@ impl Related<super::users::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
+#[allow(dead_code)]
 impl Model {
     /// Check if the token is expired
     pub fn is_expired(&self) -> bool {
