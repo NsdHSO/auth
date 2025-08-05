@@ -1,10 +1,10 @@
-# fly.toml app configuration file generated for hospital-miyw4q on 2025-05-23T06:57:46Z
+# fly.toml app configuration file generated for auth-e5sweg on 2025-08-05T01:50:42Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'hospital-miyw4q'
-primary_region = 'otp'
+app = 'auth-e5sweg'
+primary_region = 'fra'
 
 [build]
 
