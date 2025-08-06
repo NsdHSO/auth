@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/NsdHSO/auth/compare/v1.2.0...v1.3.0) (2025-08-06)
+
+
+### Features
+
+* 🎸 refactor port to md ([2e8c123](https://github.com/NsdHSO/auth/commit/2e8c1238f35ded94dc808f98ae0dee1f5cf05819))
+
 # [1.2.0](https://github.com/NsdHSO/auth/compare/v1.1.0...v1.2.0) (2025-08-05)
 
 
