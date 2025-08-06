@@ -1,3 +1,4 @@
+use std::ops::ControlFlow;
 use crate::components::users::enums::SearchValue;
 use crate::entity::users::{Column, Entity, Model};
 use crate::http_response::error_handler::CustomError;
@@ -46,13 +47,13 @@ impl UsersService {
             .one(&self.conn)
             .await
             .map_err(|e| CustomError::new(HttpCodeW::InternalServerError, e.to_string()))?;
-        if let Some(user_model) = user {
-            Ok(Some(user_model))
-        } else {
-            Err(CustomError::new(
+
+        match user {
+            Some(user_model) => Ok(Some(user_model)),
+            None => Err(CustomError::new(
                 HttpCodeW::NotFound,
                 "User not found".to_string(),
-            ))
+            )),
         }
     }
 }

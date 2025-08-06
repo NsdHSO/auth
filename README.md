@@ -70,7 +70,7 @@ Build and run with Docker:
 
 ```bash
 docker build -t auth .
-docker run -p 5000:5000 auth
+docker run -p 4100:4100 auth
 ```
 
 For testing:
@@ -395,5 +395,5 @@ GET /v1/health/detailed         # Detailed health status
 
 - `DATABASE_URL` - PostgreSQL connection string
 - `HOST` - Server host (default: 127.0.0.1)
-- `PORT` - Server port (default: 5000)
+- `PORT` - Server port (default: 4100)
 - `RUST_LOG` - Log level (default: debug)
