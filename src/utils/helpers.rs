@@ -1,9 +1,11 @@
+use crate::http_response::{error_handler::CustomError, HttpCodeW};
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
+use argon2::{self, Argon2, PasswordHasher};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use chrono_tz::Europe;
 use nanoid::nanoid;
 use sea_orm::DbErr;
-
-use crate::http_response::{error_handler::CustomError, HttpCodeW};
 
 /// Generates a random ID for authentication purposes
 #[allow(dead_code)]
@@ -14,13 +16,15 @@ pub fn generate_auth_id() -> String {
 /// Generates a secure token for authentication
 #[allow(dead_code)]
 pub fn generate_secure_token() -> String {
-    nanoid!(64, &[
-        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-        'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm',
-        'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
-    ])
+    nanoid!(
+        64,
+        &[
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+            'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+            'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
+            'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+        ]
+    )
 }
 
 /// Checks if a database error is due to a duplicate key constraint violation.
@@ -90,6 +94,11 @@ pub fn now_time() -> NaiveDateTime {
         .naive_local()
 }
 
+#[allow(dead_code)]
+pub fn now_date_time_utc() -> DateTime<Utc> {
+    Utc::now()
+}
+
 /// Parses a date string into a DateTime<Utc> object.
 ///
 /// This function attempts to parse the string using common date formats:
@@ -144,7 +153,8 @@ pub fn parse_date(date_str: &str) -> Result<DateTime<Utc>, CustomError> {
 /// Validates an email address format
 #[allow(dead_code)]
 pub fn validate_email(email: &str) -> bool {
-    let email_regex = regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
+    let email_regex =
+        regex::Regex::new(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").unwrap();
     email_regex.is_match(email)
 }
 
@@ -184,6 +194,18 @@ pub fn validate_password(password: &str) -> Result<(), CustomError> {
 
 /// Generates a salt for password hashing
 #[allow(dead_code)]
-pub fn generate_salt() -> String {
-    nanoid!(16)
+pub fn generate_salt() -> SaltString {
+    SaltString::generate(&mut OsRng)
+}
+
+pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Error> {
+    let salt = generate_salt();
+
+    let argon2 = Argon2::default();
+
+    // Hash password with generated salt
+    let password_hash = argon2.hash_password(password.as_bytes(), &salt)?;
+
+    // Return the encoded hash string
+    Ok(password_hash.to_string())
 }
