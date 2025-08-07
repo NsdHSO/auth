@@ -62,7 +62,12 @@ impl AuthService {
             .find("email", SearchValue::String(payload.email.to_string()))
             .await;
         let user_model = user?;
-
+        if (user_model.needs_email_verification()) {
+            return Err(CustomError::new(
+                HttpCodeW::Unauthorized,
+                "User needs email verification".to_string(),
+            ));
+        }
         let check_pass = self
             .users_service
             .check_credentials(payload, &user_model)
