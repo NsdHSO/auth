@@ -1,3 +1,11 @@
+# [1.4.0](https://github.com/NsdHSO/auth/compare/v1.3.0...v1.4.0) (2025-08-07)
+
+
+### Features
+
+* 🎸 added payload created for user ([6fb7d53](https://github.com/NsdHSO/auth/commit/6fb7d5364115eb9e6a346a98b29745d13031f469))
+* 🎸 added register user ([4751c05](https://github.com/NsdHSO/auth/commit/4751c05e8d37dcd0316494bb1c1d69886ee9ec2e))
+
 # [1.3.0](https://github.com/NsdHSO/auth/compare/v1.2.0...v1.3.0) (2025-08-06)
 
 
