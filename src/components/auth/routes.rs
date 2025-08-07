@@ -1,20 +1,15 @@
 use super::services::AuthService;
-use crate::components::users::UsersService;
 use crate::entity::users::RegisterRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::http_response_builder;
 use actix_web::{post, web, HttpResponse};
-use sea_orm::DatabaseConnection;
 
 #[post("/auth/register")]
 pub async fn register(
     payload: ValidatedJson<RegisterRequestBody>,
-    _service: web::Data<AuthService>,
-    _service_user: web::Data<UsersService>,
-    db_conn: web::Data<DatabaseConnection>,
+    service: web::Data<AuthService>,
 ) -> Result<HttpResponse, CustomError> {
-    let service_instance = AuthService::new(db_conn.get_ref(), _service_user.get_ref());
-    let registration = service_instance.register(Option::from(payload.0)).await;
+    let registration = service.register(Option::from(payload.0)).await;
     match registration {
         Ok(user) => {
             let response = http_response_builder::ok(user);
