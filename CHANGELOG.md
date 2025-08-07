@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/NsdHSO/auth/compare/v1.5.0...v1.6.0) (2025-08-07)
+
+
+### Features
+
+* 🎸 added good payload for register ([405b3cc](https://github.com/NsdHSO/auth/commit/405b3ccc5418019c6bb43e359bbdc4e3e4fe9221))
+
 # [1.5.0](https://github.com/NsdHSO/auth/compare/v1.4.0...v1.5.0) (2025-08-07)
 
 
