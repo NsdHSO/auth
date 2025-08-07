@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/NsdHSO/auth/compare/v1.4.0...v1.5.0) (2025-08-07)
+
+
+### Features
+
+* 🎸 use service from dependency injection ([fd23cce](https://github.com/NsdHSO/auth/commit/fd23cce8961f411ae277597d24b04d5ba84626e0))
+
 # [1.4.0](https://github.com/NsdHSO/auth/compare/v1.3.0...v1.4.0) (2025-08-07)
 
 
