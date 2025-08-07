@@ -1,7 +1,10 @@
 use sea_orm::entity::prelude::*;
+use sea_orm::prelude::async_trait::async_trait;
+use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
 use crate::entity::enums::{UserRole, UserStatus};
+use crate::utils::helpers::now_date_time_utc;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
 #[sea_orm(table_name = "users", schema_name = "auth")]
@@ -55,7 +58,23 @@ impl Related<super::sessions::Entity> for Entity {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+#[async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    // The `pre_save` method is called before an insert or update.
+    // It returns the `ActiveModel` with any changes applied.
+    async fn before_save<C>(self, db: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        let mut active_model = self;
+
+        // The logic for updating your fields is correct.
+        active_model.last_login = Set(Some(DateTimeWithTimeZone::from(now_date_time_utc())));
+        active_model.updated_at = Set(DateTimeWithTimeZone::from(now_date_time_utc()));
+
+        Ok(active_model)
+    }
+}
 
 impl Model {
     /// Get the user's full name
@@ -109,10 +128,17 @@ impl Model {
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
-pub struct RegisterRequestBody {
+pub struct AuthRequestBody {
     pub email: String,
     pub username: String,
     pub password: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+pub struct RegisterResponseBody {
+    pub user_id: String,
+    pub email: String,
+    pub status: String,
 }

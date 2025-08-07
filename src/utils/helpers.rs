@@ -1,7 +1,11 @@
 use crate::http_response::{error_handler::CustomError, HttpCodeW};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
-use argon2::{self, Argon2, PasswordHasher};
+use argon2::{
+    self,
+    password_hash::{PasswordHash, PasswordVerifier},
+    Argon2, PasswordHasher,
+};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use chrono_tz::Europe;
 use nanoid::nanoid;
@@ -193,7 +197,6 @@ pub fn validate_password(password: &str) -> Result<(), CustomError> {
 }
 
 /// Generates a salt for password hashing
-#[allow(dead_code)]
 pub fn generate_salt() -> SaltString {
     SaltString::generate(&mut OsRng)
 }
@@ -208,4 +211,19 @@ pub fn hash_password(password: &str) -> Result<String, argon2::password_hash::Er
 
     // Return the encoded hash string
     Ok(password_hash.to_string())
+}
+
+pub fn verify_password(
+    password: &str,
+    password_hash: &str,
+) -> Result<bool, argon2::password_hash::Error> {
+    let argon2 = Argon2::default();
+
+    let parsed_has = PasswordHash::new(password_hash)?;
+    match argon2.verify_password(password.as_bytes(), &parsed_has) {
+        Ok(_) => Ok(true),
+        Err(argon2::password_hash::Error::Password) => Ok(false),
+
+        Err(e) => Err(e),
+    }
 }

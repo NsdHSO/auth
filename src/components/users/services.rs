@@ -1,10 +1,10 @@
 use crate::components::users::enums::SearchValue;
-use crate::entity::users::{ActiveModel, Column, Entity, Model, RegisterRequestBody};
+use crate::entity::users::{ActiveModel, Column, Entity, Model, AuthRequestBody};
 use crate::entity::UserRole::User;
 use crate::entity::UserStatus;
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
-use crate::utils::helpers::{hash_password, now_date_time_utc};
+use crate::utils::helpers::{hash_password, now_date_time_utc, verify_password};
 use sea_orm::prelude::DateTimeWithTimeZone;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
@@ -59,7 +59,7 @@ impl UsersService {
             )),
         }
     }
-    pub async fn create(&self, payload: RegisterRequestBody) -> Result<Model, CustomError> {
+    pub async fn create(&self, payload: AuthRequestBody) -> Result<Model, CustomError> {
         let active_model = Self::create_payload(payload);
         let result = active_model.insert(&self.conn).await;
 
@@ -74,7 +74,33 @@ impl UsersService {
         }
     }
 
-    pub fn create_payload(payload: RegisterRequestBody) -> ActiveModel {
+    pub async fn check_credentials(&self, payload: AuthRequestBody, user_model: &Model) -> Result<ActiveModel, CustomError> {
+        match user_model.can_login() {
+            true => match verify_password(payload.password.as_str(), &user_model.password_hash) {
+                Ok(value) => match value {
+                    true => {
+                        let active_user: ActiveModel = user_model.clone().into();
+
+
+                       Ok(active_user)
+                    }
+                    false => Err(CustomError::new(
+                        HttpCodeW::Unauthorized,
+                        "Invalid credentials".to_string(),
+                    )),
+                },
+                Err(_) => Err(CustomError::new(
+                    HttpCodeW::Unauthorized,
+                    "Invalid credentials".to_string(),
+                )),
+            },
+            false => Err(CustomError::new(
+                HttpCodeW::Unauthorized,
+                "Invalid credentials".to_string(),
+            )),
+        }
+    }
+    pub fn create_payload(payload: AuthRequestBody) -> ActiveModel {
         let hashed = hash_password(payload.password.as_str()).expect("hash failed");
 
         ActiveModel {
