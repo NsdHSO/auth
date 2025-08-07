@@ -9,6 +9,7 @@ use sea_orm::prelude::DateTimeWithTimeZone;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
 };
+use uuid::Uuid;
 use UserStatus::PendingVerification;
 
 #[derive(Clone)]
@@ -64,10 +65,10 @@ impl UsersService {
 
         match result {
             Ok(res) => Ok(res),
-            Err(_) => {
+            Err(e) => {
                 Err(CustomError::new(
                     HttpCodeW::InternalServerError,
-                    "Internal server error".to_string(),
+                    format!("Error creating user: {}", e),
                 ))
             }
         }
@@ -77,13 +78,13 @@ impl UsersService {
         let hashed = hash_password(payload.password.as_str()).expect("hash failed");
 
         ActiveModel {
-            id: Default::default(),
+            id: Set(Uuid::new_v4()),
             email: Set(payload.email),
             username: Set(payload.username),
             password_hash: Set(hashed),
             first_name: Set(payload.first_name),
             last_name: Set(payload.last_name),
-            role: Set(User),
+            role: Set(Default::default()),
             status: Set(PendingVerification),
             email_verified: Set(false),
             last_login: Set(None),

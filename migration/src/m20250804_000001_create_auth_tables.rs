@@ -15,7 +15,7 @@ impl MigrationTrait for Migration {
             r#"DO $$ 
             BEGIN 
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role_enum') THEN
-                    CREATE TYPE user_role_enum AS ENUM (
+                    CREATE TYPE auth.user_role_enum AS ENUM (
                         'ADMIN', 'USER', 'MODERATOR', 'GUEST'
                     );
                 END IF;
@@ -24,10 +24,10 @@ impl MigrationTrait for Migration {
 
         db.execute(Statement::from_string(
             manager.get_database_backend(),
-            r#"DO $$ 
-            BEGIN 
+            r#"DO $$
+            BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status_enum') THEN
-                    CREATE TYPE user_status_enum AS ENUM (
+                    CREATE TYPE auth.user_status_enum AS ENUM (
                         'ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION'
                     );
                 END IF;
@@ -36,10 +36,10 @@ impl MigrationTrait for Migration {
 
         db.execute(Statement::from_string(
             manager.get_database_backend(),
-            r#"DO $$ 
-            BEGIN 
+            r#"DO $$
+            BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'token_type_enum') THEN
-                    CREATE TYPE token_type_enum AS ENUM (
+                    CREATE TYPE auth.token_type_enum AS ENUM (
                         'ACCESS', 'REFRESH', 'RESET_PASSWORD', 'EMAIL_VERIFICATION'
                     );
                 END IF;
@@ -208,6 +208,7 @@ impl MigrationTrait for Migration {
                     .name("idx_tokens_user_id")
                     .table(Tokens::Table)
                     .col(Tokens::UserId)
+                    .if_not_exists()
                     .to_owned()
             )
             .await?;
@@ -218,6 +219,7 @@ impl MigrationTrait for Migration {
                     .name("idx_tokens_token")
                     .table(Tokens::Table)
                     .col(Tokens::Token)
+                    .if_not_exists()
                     .to_owned()
             )
             .await?;
@@ -228,6 +230,7 @@ impl MigrationTrait for Migration {
                     .name("idx_sessions_user_id")
                     .table(Sessions::Table)
                     .col(Sessions::UserId)
+                    .if_not_exists()
                     .to_owned()
             )
             .await?;
@@ -238,6 +241,7 @@ impl MigrationTrait for Migration {
                     .name("idx_sessions_token")
                     .table(Sessions::Table)
                     .col(Sessions::SessionToken)
+                    .if_not_exists()
                     .to_owned()
             )
             .await?;
