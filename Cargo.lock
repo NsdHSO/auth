@@ -402,7 +402,7 @@ dependencies = [
 
 [[package]]
 name = "auth"
-version = "1.9.0"
+version = "1.10.0"
 dependencies = [
  "actix-cors",
  "actix-rt",
@@ -417,6 +417,7 @@ dependencies = [
  "futures-util",
  "lettre",
  "listenfd",
+ "log",
  "nanoid",
  "once_cell",
  "rand 0.8.5",

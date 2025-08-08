@@ -68,7 +68,8 @@ impl AuthService {
                         // Now, handle the result of token creation
                         match token_creation_result {
                             Ok(_token) => {
-                                self.mail_send_service.send_mail(model.email.clone());
+                                self.mail_send_service
+                                    .send_mail(model.email.clone(), _token.token.clone());
                                 Ok(Some(RegisterResponseBody {
                                     user_id: model.id.to_string(),
                                     email: model.email,
@@ -130,6 +131,28 @@ impl AuthService {
                 }
             }
             Err(e) => Err(e),
+        }
+    }
+
+    pub async fn verify_email(
+        &self,
+        token: String,
+        conn_info: ConnectionInfo,
+    ) -> Result<String, CustomError> {
+        let ip_address = conn_info
+            .realip_remote_addr()
+            .map(|addr| addr.to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+        let result = self.tokens_service.find_token(token, ip_address).await;
+
+        match result {
+            Ok(value) => Ok(value),
+            Err(e) => match e.error_status_code {
+                HttpCodeW::Forbidden => {
+                    return Err(CustomError::new(HttpCodeW::Forbidden, "Token not found or None".to_string()))
+                }
+                _ => Err(e), // Or handle other error types here
+            },
         }
     }
 }

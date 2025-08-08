@@ -120,13 +120,7 @@ impl UsersService {
                 "notes": "Needs email verification",
                 "ip_address": ip_address,
             });
-            let mut login_history: Vec<Value> = match active_user.login_history {
-                Unchanged(Value::Array(array)) => array,
-                Set(Value::Array(array)) => array,
-                _ => vec![],
-            };
-            login_history.push(new_login);
-            active_user.login_history = Set(Value::Array(login_history));
+            Self::add_details_login(&mut active_user, new_login);
             active_user
                 .update(&self.conn)
                 .await
@@ -140,6 +134,44 @@ impl UsersService {
         let check_pass = self.check_credentials(payload, &user_model).await;
         Ok(check_pass)
     }
+
+    fn add_details_login(active_user: &mut ActiveModel, new_login: Value) {
+        let mut login_history: Vec<Value> = match &active_user.login_history {
+            Unchanged(Value::Array(array)) => array.clone(),
+            Set(Value::Array(array)) => array.clone(),
+            _ => vec![],
+        };
+        login_history.push(new_login);
+        active_user.login_history = Set(Value::Array(login_history));
+    }
+
+    pub async fn update(
+        self,
+        field: &str,
+        value: &str,
+        mut model: ActiveModel,
+        ip_address: String,
+    ) -> Result<(), CustomError> {
+        match (field, value) {
+            ("email_verified", va) => {
+                let new_login = json!({
+                    "timestamp": now_date_time_utc(),
+                    "notes": "Email verified successfully",
+                    "ip_address": ip_address,
+                });
+                Self::add_details_login(&mut model, new_login);
+                model.email_verified = Set(true)
+            }
+            (&_, _) => todo!(),
+        };
+
+        model
+            .update(&self.conn)
+            .await
+            .map_err(|e| CustomError::new(HttpCodeW::InternalServerError, e.to_string()))
+            .map(|s| ())
+    }
+
     pub fn create_payload(payload: AuthRequestBody, conn_info: ConnectionInfo) -> ActiveModel {
         let hashed = hash_password(payload.password.as_str()).expect("hash failed");
         let ip_address = conn_info
