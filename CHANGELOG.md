@@ -1,3 +1,11 @@
+# [1.8.0](https://github.com/NsdHSO/auth/compare/v1.7.0...v1.8.0) (2025-08-08)
+
+
+### Features
+
+* 🎸 added check for ([20a03f6](https://github.com/NsdHSO/auth/commit/20a03f640466fca5cb82db2f95344cd35d742ddf))
+* 🎸 optimize the logic for user ([929ee06](https://github.com/NsdHSO/auth/commit/929ee06dcc5e1a2f930cd908f94d057e28cd3518))
+
 # [1.7.0](https://github.com/NsdHSO/auth/compare/v1.6.0...v1.7.0) (2025-08-07)
 
 
