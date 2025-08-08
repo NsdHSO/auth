@@ -1,3 +1,11 @@
+# [1.11.0](https://github.com/NsdHSO/auth/compare/v1.10.0...v1.11.0) (2025-08-08)
+
+
+### Features
+
+* 🎸 added status for user ([a58422e](https://github.com/NsdHSO/auth/commit/a58422e0823fbc7c90b2bf9cf1c41c4d12752801))
+* 🎸 added variable for host ([1f90542](https://github.com/NsdHSO/auth/commit/1f90542a62d1e976e74500e33ae3c28f2816d47d))
+
 # [1.10.0](https://github.com/NsdHSO/auth/compare/v1.9.0...v1.10.0) (2025-08-08)
 
 
