@@ -68,7 +68,7 @@ impl AuthService {
                         // Now, handle the result of token creation
                         match token_creation_result {
                             Ok(_token) => {
-                                self.mail_send_service
+                                let _ = self.mail_send_service
                                     .send_mail(model.email.clone(), _token.token.clone());
                                 Ok(Some(RegisterResponseBody {
                                     user_id: model.id.to_string(),

@@ -75,9 +75,7 @@ impl TokensService {
                         let updated_user_result = self
                             .users_service
                             .clone()
-                            .update("email_verified", "true", active_user_model, ip_address)
-                            .await;
-
+                            .update("email_verified", "true", active_user_model, ip_address).await;
                         if let Ok(_) = updated_user_result {
                             // If user update was successful, update the token
                             let mut active_token_model: ActiveModel = response_model.into();
