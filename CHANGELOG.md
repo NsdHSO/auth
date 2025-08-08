@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/NsdHSO/auth/compare/v1.9.0...v1.10.0) (2025-08-08)
+
+
+### Features
+
+* 🎸 remove the comment ([5c1f004](https://github.com/NsdHSO/auth/commit/5c1f0044c5050fd181190ff8b3ed7ba2b7e7d176))
+
 # [1.9.0](https://github.com/NsdHSO/auth/compare/v1.8.0...v1.9.0) (2025-08-08)
 
 
