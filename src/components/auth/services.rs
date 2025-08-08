@@ -1,25 +1,32 @@
+use crate::components::mail_send::MailSendService;
+use crate::components::tokens::TokensService;
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
 use crate::entity::users::{ActiveModel, AuthRequestBody, Model, RegisterResponseBody};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
-use sea_orm::{ActiveEnum, ActiveModelTrait, ActiveValue, DatabaseConnection, Unchanged};
-use serde_json::json;
-use serde_json::Value;
-use ActiveValue::Set;
 use actix_web::dev::ConnectionInfo;
+use sea_orm::{ActiveEnum, ActiveModelTrait, DatabaseConnection};
 
 #[derive(Clone)]
 pub struct AuthService {
     conn: DatabaseConnection,
     users_service: UsersService,
+    mail_send_service: MailSendService,
+    tokens_service: TokensService,
 }
 
 impl AuthService {
-    pub fn new(conn: &DatabaseConnection, users_service: &UsersService) -> Self {
+    pub fn new(
+        conn: &DatabaseConnection,
+        users_service: &UsersService,
+        tokens_service: &TokensService,
+    ) -> Self {
         Self {
             conn: conn.clone(),
             users_service: users_service.clone(),
+            mail_send_service: MailSendService::new(),
+            tokens_service: tokens_service.clone(),
         }
     }
 
@@ -49,13 +56,40 @@ impl AuthService {
             )),
             // User not found - good, we can create one
             Err(e) if e.error_status_code == HttpCodeW::NotFound => {
-                self.users_service.create(payload, conn_info).await.map(|model| {
-                    Some(RegisterResponseBody {
-                        user_id: model.id.to_string(),
-                        email: model.email,
-                        status: model.status.to_value(),
-                    })
-                })
+                let user_creation_result = self.users_service.create(payload, conn_info).await;
+
+                // Then, process the result of user creation
+                match user_creation_result {
+                    Ok(model) => {
+                        // If the user was created successfully, create the token
+                        let token_creation_result =
+                            self.tokens_service.create_token_for_user(model.id).await;
+
+                        // Now, handle the result of token creation
+                        match token_creation_result {
+                            Ok(_token) => {
+                                self.mail_send_service.send_mail(model.email.clone());
+                                // If token creation was also successful, return the final response
+                                Ok(Some(RegisterResponseBody {
+                                    user_id: model.id.to_string(),
+                                    email: model.email,
+                                    status: model.status.to_value(),
+                                }))
+                            }
+                            Err(token_err) => {
+                                // If token creation failed, return the error
+                                Err(CustomError::new(
+                                    HttpCodeW::InternalServerError,
+                                    token_err.to_string(),
+                                ))
+                            }
+                        }
+                    }
+                    Err(user_err) => {
+                        // If user creation failed, return the error
+                        Err(user_err)
+                    }
+                }
             }
             Err(e) => Err(e),
         }
@@ -66,7 +100,8 @@ impl AuthService {
         payload: AuthRequestBody,
         conn_info: ConnectionInfo,
     ) -> Result<Option<Model>, CustomError> {
-        let ip_address = conn_info.realip_remote_addr()
+        let ip_address = conn_info
+            .realip_remote_addr()
             .map(|addr| addr.to_string())
             .unwrap_or_else(|| "unknown".to_string());
 
@@ -75,7 +110,11 @@ impl AuthService {
             .find("email", SearchValue::String(payload.email.to_string()))
             .await;
         let user_model = user?;
-        let check_pass = match self.users_service.check_credentials_and_email_verification(payload, ip_address, user_model).await {
+        let check_pass = match self
+            .users_service
+            .check_credentials_and_email_verification(payload, ip_address, user_model)
+            .await
+        {
             Ok(value) => value,
             Err(value) => return value,
         };

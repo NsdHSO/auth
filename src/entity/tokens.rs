@@ -1,10 +1,13 @@
 use sea_orm::entity::prelude::*;
+use sea_orm::prelude::async_trait::async_trait;
+use sea_orm::Set;
 use serde::{Deserialize, Serialize};
 
 use crate::entity::enums::TokenType;
+use crate::utils::helpers::now_date_time_utc;
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "tokens")]
+#[sea_orm(table_name = "tokens", schema_name = "auth")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub id: Uuid,
@@ -43,8 +46,22 @@ impl Related<super::users::Entity> for Entity {
     }
 }
 
-impl ActiveModelBehavior for ActiveModel {}
+#[async_trait]
+impl ActiveModelBehavior for ActiveModel {
+    // The `pre_save` method is called before an insert or update.
+    // It returns the `ActiveModel` with any changes applied.
+    async fn before_save<C>(self, db: &C, insert: bool) -> Result<Self, DbErr>
+    where
+        C: ConnectionTrait,
+    {
+        let mut active_model = self;
 
+        // The logic for updating your fields is correct.
+        active_model.updated_at = Set(DateTimeWithTimeZone::from(now_date_time_utc()));
+
+        Ok(active_model)
+    }
+}
 #[allow(dead_code)]
 impl Model {
     /// Check if the token is expired

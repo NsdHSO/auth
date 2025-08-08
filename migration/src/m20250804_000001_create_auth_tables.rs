@@ -9,13 +9,17 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
-        // Create enum types for auth system
+        // Create enum types for system
         db.execute(Statement::from_string(
             manager.get_database_backend(),
             r#"DO $$ 
             BEGIN 
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role_enum') THEN
-                    CREATE TYPE auth.user_role_enum AS ENUM (
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE t.typname = 'user_role' AND n.nspname = 'public'
+                ) THEN
+                    CREATE TYPE public.user_role AS ENUM (
                         'ADMIN', 'USER', 'MODERATOR', 'GUEST'
                     );
                 END IF;
@@ -26,8 +30,12 @@ impl MigrationTrait for Migration {
             manager.get_database_backend(),
             r#"DO $$
             BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_status_enum') THEN
-                    CREATE TYPE auth.user_status_enum AS ENUM (
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE t.typname = 'user_status' AND n.nspname = 'public'
+                ) THEN
+                    CREATE TYPE public.user_status AS ENUM (
                         'ACTIVE', 'INACTIVE', 'SUSPENDED', 'PENDING_VERIFICATION'
                     );
                 END IF;
@@ -38,12 +46,22 @@ impl MigrationTrait for Migration {
             manager.get_database_backend(),
             r#"DO $$
             BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'token_type_enum') THEN
-                    CREATE TYPE auth.token_type_enum AS ENUM (
+                IF NOT EXISTS (
+                    SELECT 1 FROM pg_type t
+                    JOIN pg_namespace n ON n.oid = t.typnamespace
+                    WHERE t.typname = 'token_type' AND n.nspname = 'public'
+                ) THEN
+                    CREATE TYPE public.token_type AS ENUM (
                         'ACCESS', 'REFRESH', 'RESET_PASSWORD', 'EMAIL_VERIFICATION'
                     );
                 END IF;
             END $$;"#,
+        )).await?;
+
+        // Ensure types in public are resolvable alongside auth
+        db.execute(Statement::from_string(
+            manager.get_database_backend(),
+            "SET search_path TO auth, public;",
         )).await?;
 
         // Create users table
@@ -66,13 +84,13 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Users::LastName).string())
                     .col(
                         ColumnDef::new(Users::Role)
-                            .custom(Alias::new("user_role_enum"))
+                            .custom(Alias::new("user_role"))
                             .not_null()
                             .default("USER")
                     )
                     .col(
                         ColumnDef::new(Users::Status)
-                            .custom(Alias::new("user_status_enum"))
+                            .custom(Alias::new("user_status"))
                             .not_null()
                             .default("PENDING_VERIFICATION")
                     )
@@ -111,7 +129,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Tokens::Token).string().not_null().unique_key())
                     .col(
                         ColumnDef::new(Tokens::TokenType)
-                            .custom(Alias::new("token_type_enum"))
+                            .custom(Alias::new("token_type"))
                             .not_null()
                     )
                     .col(ColumnDef::new(Tokens::ExpiresAt).timestamp_with_time_zone().not_null())
@@ -266,17 +284,17 @@ impl MigrationTrait for Migration {
         let db = manager.get_connection();
         db.execute(Statement::from_string(
             manager.get_database_backend(),
-            "DROP TYPE IF EXISTS user_role_enum;",
+            "DROP TYPE IF EXISTS public.user_role;",
         )).await?;
 
         db.execute(Statement::from_string(
             manager.get_database_backend(),
-            "DROP TYPE IF EXISTS user_status_enum;",
+            "DROP TYPE IF EXISTS public.user_status;",
         )).await?;
 
         db.execute(Statement::from_string(
             manager.get_database_backend(),
-            "DROP TYPE IF EXISTS token_type_enum;",
+            "DROP TYPE IF EXISTS public.token_type;",
         )).await?;
 
         Ok(())
