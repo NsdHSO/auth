@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/NsdHSO/auth/compare/v1.6.0...v1.7.0) (2025-08-07)
+
+
+### Features
+
+* 🎸 check the verification of email verification ([5f4a2ed](https://github.com/NsdHSO/auth/commit/5f4a2ed8c9c7e44fecfd929609ef3c20d4609897))
+
 # [1.6.0](https://github.com/NsdHSO/auth/compare/v1.5.0...v1.6.0) (2025-08-07)
 
 
