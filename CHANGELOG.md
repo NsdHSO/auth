@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/NsdHSO/auth/compare/v1.8.0...v1.9.0) (2025-08-08)
+
+
+### Features
+
+* 🎸 added good migration ([8054149](https://github.com/NsdHSO/auth/commit/8054149b13c22eda1538f50c7ec6265db5300f60))
+
 # [1.8.0](https://github.com/NsdHSO/auth/compare/v1.7.0...v1.8.0) (2025-08-08)
 
 
