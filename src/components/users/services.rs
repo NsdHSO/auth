@@ -1,6 +1,7 @@
 use crate::components::users::enums::SearchValue;
 use crate::entity::users::{ActiveModel, AuthRequestBody, Column, Entity, Model};
 use crate::entity::UserStatus;
+use crate::entity::UserStatus::Active;
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use crate::utils::helpers::{hash_password, now_date_time_utc, verify_password};
@@ -160,7 +161,8 @@ impl UsersService {
                     "ip_address": ip_address,
                 });
                 Self::add_details_login(&mut model, new_login);
-                model.email_verified = Set(true)
+                model.email_verified = Set(true);
+                model.status = Set(Active)
             }
             (&_, _) => todo!(),
         };
