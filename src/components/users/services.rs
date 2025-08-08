@@ -1,14 +1,15 @@
 use crate::components::users::enums::SearchValue;
-use crate::entity::users::{ActiveModel, Column, Entity, Model, AuthRequestBody};
-use crate::entity::UserRole::User;
+use crate::entity::users::{ActiveModel, AuthRequestBody, Column, Entity, Model};
 use crate::entity::UserStatus;
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use crate::utils::helpers::{hash_password, now_date_time_utc, verify_password};
+use actix_web::dev::ConnectionInfo;
 use sea_orm::prelude::DateTimeWithTimeZone;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set, Unchanged,
 };
+use serde_json::{json, Value};
 use uuid::Uuid;
 use UserStatus::PendingVerification;
 
@@ -59,30 +60,35 @@ impl UsersService {
             )),
         }
     }
-    pub async fn create(&self, payload: AuthRequestBody) -> Result<Model, CustomError> {
-        let active_model = Self::create_payload(payload);
+    pub async fn create(
+        &self,
+        payload: AuthRequestBody,
+        conn_info: ConnectionInfo,
+    ) -> Result<Model, CustomError> {
+        let active_model = Self::create_payload(payload, conn_info);
         let result = active_model.insert(&self.conn).await;
 
         match result {
             Ok(res) => Ok(res),
-            Err(e) => {
-                Err(CustomError::new(
-                    HttpCodeW::InternalServerError,
-                    format!("Error creating user: {}", e),
-                ))
-            }
+            Err(e) => Err(CustomError::new(
+                HttpCodeW::InternalServerError,
+                format!("Error creating user: {}", e),
+            )),
         }
     }
 
-    pub async fn check_credentials(&self, payload: AuthRequestBody, user_model: &Model) -> Result<ActiveModel, CustomError> {
+    pub async fn check_credentials(
+        &self,
+        payload: AuthRequestBody,
+        user_model: &Model,
+    ) -> Result<ActiveModel, CustomError> {
         match user_model.can_login() {
             true => match verify_password(payload.password.as_str(), &user_model.password_hash) {
                 Ok(value) => match value {
                     true => {
                         let active_user: ActiveModel = user_model.clone().into();
 
-
-                       Ok(active_user)
+                        Ok(active_user)
                     }
                     false => Err(CustomError::new(
                         HttpCodeW::Unauthorized,
@@ -100,8 +106,52 @@ impl UsersService {
             )),
         }
     }
-    pub fn create_payload(payload: AuthRequestBody) -> ActiveModel {
+
+    pub async fn check_credentials_and_email_verification(
+        &self,
+        payload: AuthRequestBody,
+        ip_address: String,
+        user_model: Model,
+    ) -> Result<Result<ActiveModel, CustomError>, Result<Option<Model>, CustomError>> {
+        if (user_model.needs_email_verification()) {
+            let mut active_user: ActiveModel = user_model.into();
+            let new_login = json!({
+                "timestamp": now_date_time_utc(),
+                "notes": "Needs email verification",
+                "ip_address": ip_address,
+            });
+            let mut login_history: Vec<Value> = match active_user.login_history {
+                Unchanged(Value::Array(array)) => array,
+                Set(Value::Array(array)) => array,
+                _ => vec![],
+            };
+            login_history.push(new_login);
+            active_user.login_history = Set(Value::Array(login_history));
+            active_user
+                .update(&self.conn)
+                .await
+                .expect("Failed to update user");
+
+            return Err(Err(CustomError::new(
+                HttpCodeW::Unauthorized,
+                "User needs email verification".to_string(),
+            )));
+        }
+        let check_pass = self.check_credentials(payload, &user_model).await;
+        Ok(check_pass)
+    }
+    pub fn create_payload(payload: AuthRequestBody, conn_info: ConnectionInfo) -> ActiveModel {
         let hashed = hash_password(payload.password.as_str()).expect("hash failed");
+        let ip_address = conn_info
+            .realip_remote_addr()
+            .map(|addr| addr.to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+
+        let new_login = json!({
+            "timestamp": now_date_time_utc(),
+            "notes": "User was created",
+            "ip_address": ip_address,
+        });
 
         ActiveModel {
             id: Set(Uuid::new_v4()),
@@ -116,6 +166,7 @@ impl UsersService {
             last_login: Set(None),
             created_at: Set(DateTimeWithTimeZone::from(now_date_time_utc())),
             updated_at: Set(DateTimeWithTimeZone::from(now_date_time_utc())),
+            login_history: Set(Value::Array(vec![new_login])),
         }
     }
 }

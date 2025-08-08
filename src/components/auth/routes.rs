@@ -3,13 +3,15 @@ use crate::entity::users::AuthRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::http_response_builder;
 use actix_web::{post, web, HttpResponse};
+use actix_web::dev::ConnectionInfo;
 
 #[post("/auth/register")]
 pub async fn register(
     payload: ValidatedJson<AuthRequestBody>,
     service: web::Data<AuthService>,
+    conn_info: ConnectionInfo,
 ) -> Result<HttpResponse, CustomError> {
-    let registration = service.register(Option::from(payload.0)).await;
+    let registration = service.register(Option::from(payload.0),conn_info).await;
     match registration {
         Ok(user) => {
             let response = http_response_builder::ok(user);
@@ -23,8 +25,9 @@ pub async fn register(
 pub async fn login(
     payload: ValidatedJson<AuthRequestBody>,
     service: web::Data<AuthService>,
+    conn_info: ConnectionInfo,
 ) -> Result<HttpResponse, CustomError> {
-    let registration = service.login(payload.0).await;
+    let registration = service.login(payload.0,conn_info).await;
     match registration {
         Ok(user) => {
             let response = http_response_builder::ok(user);

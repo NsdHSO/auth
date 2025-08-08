@@ -3,7 +3,11 @@ use crate::components::users::UsersService;
 use crate::entity::users::{ActiveModel, AuthRequestBody, Model, RegisterResponseBody};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
-use sea_orm::{ActiveEnum, ActiveModelTrait, DatabaseConnection};
+use sea_orm::{ActiveEnum, ActiveModelTrait, ActiveValue, DatabaseConnection, Unchanged};
+use serde_json::json;
+use serde_json::Value;
+use ActiveValue::Set;
+use actix_web::dev::ConnectionInfo;
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -22,6 +26,7 @@ impl AuthService {
     pub async fn register(
         &self,
         payload: Option<AuthRequestBody>,
+        conn_info: ConnectionInfo,
     ) -> Result<Option<RegisterResponseBody>, CustomError> {
         let payload = payload.ok_or_else(|| {
             CustomError::new(
@@ -44,7 +49,7 @@ impl AuthService {
             )),
             // User not found - good, we can create one
             Err(e) if e.error_status_code == HttpCodeW::NotFound => {
-                self.users_service.create(payload).await.map(|model| {
+                self.users_service.create(payload, conn_info).await.map(|model| {
                     Some(RegisterResponseBody {
                         user_id: model.id.to_string(),
                         email: model.email,
@@ -56,22 +61,24 @@ impl AuthService {
         }
     }
 
-    pub async fn login(&self, payload: AuthRequestBody) -> Result<Option<Model>, CustomError> {
+    pub async fn login(
+        &self,
+        payload: AuthRequestBody,
+        conn_info: ConnectionInfo,
+    ) -> Result<Option<Model>, CustomError> {
+        let ip_address = conn_info.realip_remote_addr()
+            .map(|addr| addr.to_string())
+            .unwrap_or_else(|| "unknown".to_string());
+
         let user = self
             .users_service
             .find("email", SearchValue::String(payload.email.to_string()))
             .await;
         let user_model = user?;
-        if (user_model.needs_email_verification()) {
-            return Err(CustomError::new(
-                HttpCodeW::Unauthorized,
-                "User needs email verification".to_string(),
-            ));
-        }
-        let check_pass = self
-            .users_service
-            .check_credentials(payload, &user_model)
-            .await;
+        let check_pass = match self.users_service.check_credentials_and_email_verification(payload, ip_address, user_model).await {
+            Ok(value) => value,
+            Err(value) => return value,
+        };
         match check_pass {
             Ok(model) => {
                 let active_model: ActiveModel = model.into();
