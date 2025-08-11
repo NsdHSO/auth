@@ -17,11 +17,14 @@ mod db;
 mod entity;
 mod http_response;
 mod utils;
+fn config_service() -> ConfigService {
+    ConfigService::new().clone()
+}
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let conn: sea_orm::DatabaseConnection = db::config::init()
+    let conn: sea_orm::DatabaseConnection = db::config::init(config_service().database_url)
         .await
         .expect("Failed to initialize database connection"); // Initialize connection here
 
@@ -64,7 +67,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .app_data(web::Data::new(ConfigService::new().clone()))
+            .app_data(web::Data::new(config_service()))
             .app_data(web::Data::new(data_base_conn.clone()))
             .app_data(web::Data::new(user_service.clone()))
             .app_data(web::Data::new(auth_service.clone()))
@@ -90,3 +93,5 @@ async fn main() -> std::io::Result<()> {
 
     server.run().await
 }
+
+

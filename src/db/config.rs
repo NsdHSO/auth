@@ -7,8 +7,8 @@ use std::io::Write;
 
 static DB: OnceCell<DatabaseConnection> = OnceCell::new();
 
-pub async fn init() -> Result<DatabaseConnection, CustomError> {
-    let db_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+pub async fn init(db_url: String) -> Result<DatabaseConnection, CustomError> {
+    let db_url = db_url;
 
     println!("Attempting to connect to auth database...");
 
