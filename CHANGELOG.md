@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/NsdHSO/auth/compare/v1.13.0...v1.14.0) (2025-08-11)
+
+
+### Features
+
+* 🎸 move database to be via service config ([ff2a7d6](https://github.com/NsdHSO/auth/commit/ff2a7d6bb01953202dea7418ad998f9f243108c3))
+
 # [1.13.0](https://github.com/NsdHSO/auth/compare/v1.12.0...v1.13.0) (2025-08-11)
 
 
