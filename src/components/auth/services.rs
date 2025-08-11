@@ -86,7 +86,6 @@ impl AuthService {
                         }
                     }
                     Err(user_err) => {
-                        // If user creation failed, return the error
                         Err(user_err)
                     }
                 }
@@ -151,7 +150,7 @@ impl AuthService {
                 HttpCodeW::Forbidden => {
                     return Err(CustomError::new(HttpCodeW::Forbidden, "Token not found or None".to_string()))
                 }
-                _ => Err(e), 
+                _ => Err(e),
             },
         }
     }
