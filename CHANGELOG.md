@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/NsdHSO/auth/compare/v1.11.0...v1.12.0) (2025-08-11)
+
+
+### Features
+
+* 🎸 tried to run ci ([bca0130](https://github.com/NsdHSO/auth/commit/bca01304d16dfa5e42e5995ddb8bdf1ad57f87cb))
+
 # [1.11.0](https://github.com/NsdHSO/auth/compare/v1.10.0...v1.11.0) (2025-08-08)
 
 
