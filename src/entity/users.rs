@@ -140,6 +140,12 @@ pub struct AuthRequestBody {
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
+pub struct AuthResponseBody {
+    pub email: String,
+    pub username: String,
+    pub access_token: String,
+}
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct RegisterResponseBody {
     pub user_id: String,
     pub email: String,

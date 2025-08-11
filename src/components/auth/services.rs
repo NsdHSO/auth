@@ -1,13 +1,13 @@
+use crate::components::config::ConfigService;
 use crate::components::mail_send::MailSendService;
 use crate::components::tokens::TokensService;
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
-use crate::entity::users::{ActiveModel, AuthRequestBody, Model, RegisterResponseBody};
+use crate::entity::users::{ActiveModel, AuthRequestBody, AuthResponseBody, Model, RegisterResponseBody};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use actix_web::dev::ConnectionInfo;
 use sea_orm::{ActiveEnum, ActiveModelTrait, DatabaseConnection};
-use crate::components::config::ConfigService;
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -35,7 +35,7 @@ impl AuthService {
         &self,
         payload: Option<AuthRequestBody>,
         conn_info: ConnectionInfo,
-        service_config: &ConfigService
+        service_config: &ConfigService,
     ) -> Result<Option<RegisterResponseBody>, CustomError> {
         let payload = payload.ok_or_else(|| {
             CustomError::new(
@@ -70,25 +70,24 @@ impl AuthService {
                         // Now, handle the result of token creation
                         match token_creation_result {
                             Ok(_token) => {
-                                let _ = self.mail_send_service
-                                    .send_mail(model.email.clone(), _token.token.clone(), service_config);
+                                let _ = self.mail_send_service.send_mail(
+                                    model.email.clone(),
+                                    _token.token.clone(),
+                                    service_config,
+                                );
                                 Ok(Some(RegisterResponseBody {
                                     user_id: model.id.to_string(),
                                     email: model.email,
                                     status: model.status.to_value(),
                                 }))
                             }
-                            Err(token_err) => {
-                                Err(CustomError::new(
-                                    HttpCodeW::InternalServerError,
-                                    token_err.to_string(),
-                                ))
-                            }
+                            Err(token_err) => Err(CustomError::new(
+                                HttpCodeW::InternalServerError,
+                                token_err.to_string(),
+                            )),
                         }
                     }
-                    Err(user_err) => {
-                        Err(user_err)
-                    }
+                    Err(user_err) => Err(user_err),
                 }
             }
             Err(e) => Err(e),
@@ -99,7 +98,7 @@ impl AuthService {
         &self,
         payload: AuthRequestBody,
         conn_info: ConnectionInfo,
-    ) -> Result<Option<Model>, CustomError> {
+    ) -> Result<Option<AuthResponseBody>, CustomError> {
         let ip_address = conn_info
             .realip_remote_addr()
             .map(|addr| addr.to_string())
@@ -110,20 +109,29 @@ impl AuthService {
             .find("email", SearchValue::String(payload.email.to_string()))
             .await;
         let user_model = user?;
-        let check_pass = match self
+        let check_pass = self
             .users_service
             .check_credentials_and_email_verification(payload, ip_address, user_model)
-            .await
-        {
-            Ok(value) => value,
-            Err(value) => return value,
-        };
+            .await.unwrap_or_else(|value| {
+            match value {
+                Ok(e) => {
+                    Err(CustomError::new(HttpCodeW::Unauthorized, format!("Invalid credentials, {:?}", e)))
+                }
+                Err(e) => {
+                    Err(CustomError::new(HttpCodeW::Unauthorized, format!("Invalid credentials, {:?}", e)))
+                }
+            }
+        });
         match check_pass {
             Ok(model) => {
                 let active_model: ActiveModel = model;
                 let update = active_model.update(&self.conn).await;
                 match update {
-                    Ok(update_model) => Ok(Some(update_model)),
+                    Ok(update_model) => Ok(Some(AuthResponseBody {
+                        email: Default::default(),
+                        access_token: Default::default(),
+                        username: Default::default(),
+                    })),
                     Err(_) => Err(CustomError::new(
                         HttpCodeW::InternalServerError,
                         "Failed to update user".to_string(),
@@ -149,7 +157,10 @@ impl AuthService {
             Ok(value) => Ok(value),
             Err(e) => match e.error_status_code {
                 HttpCodeW::Forbidden => {
-                    return Err(CustomError::new(HttpCodeW::Forbidden, "Token not found or None".to_string()))
+                    return Err(CustomError::new(
+                        HttpCodeW::Forbidden,
+                        "Token not found or None".to_string(),
+                    ))
                 }
                 _ => Err(e),
             },
