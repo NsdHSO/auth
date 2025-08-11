@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/NsdHSO/auth/compare/v1.14.0...v1.15.0) (2025-08-11)
+
+
+### Features
+
+* 🎸 added response object ([13af720](https://github.com/NsdHSO/auth/commit/13af720aab2b56e4f74f45788da4add24825fd04))
+
 # [1.14.0](https://github.com/NsdHSO/auth/compare/v1.13.0...v1.14.0) (2025-08-11)
 
 
