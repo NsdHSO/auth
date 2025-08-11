@@ -120,7 +120,7 @@ impl AuthService {
         };
         match check_pass {
             Ok(model) => {
-                let active_model: ActiveModel = model.into();
+                let active_model: ActiveModel = model;
                 let update = active_model.update(&self.conn).await;
                 match update {
                     Ok(update_model) => Ok(Some(update_model)),
