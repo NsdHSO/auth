@@ -10,6 +10,7 @@ use dotenv::dotenv;
 use env_logger::{Builder, Env};
 use listenfd::ListenFd;
 use std::env;
+use crate::components::config::ConfigService;
 
 mod components;
 mod db;
@@ -63,6 +64,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
+            .app_data(web::Data::new(ConfigService::new().clone()))
             .app_data(web::Data::new(data_base_conn.clone()))
             .app_data(web::Data::new(user_service.clone()))
             .app_data(web::Data::new(auth_service.clone()))

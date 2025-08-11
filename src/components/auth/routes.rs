@@ -1,19 +1,22 @@
 use super::services::AuthService;
 use crate::components::auth::local_enum::Info;
+use crate::components::config::ConfigService;
 use crate::entity::users::AuthRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::http_response_builder;
 use actix_web::dev::ConnectionInfo;
 use actix_web::{get, post, web, HttpResponse};
-use log::info;
 
 #[post("/auth/register")]
 pub async fn register(
     payload: ValidatedJson<AuthRequestBody>,
     service: web::Data<AuthService>,
+    service_config: web::Data<ConfigService>,
     conn_info: ConnectionInfo,
 ) -> Result<HttpResponse, CustomError> {
-    let registration = service.register(Option::from(payload.0), conn_info).await;
+    let registration = service
+        .register(Option::from(payload.0), conn_info, &service_config)
+        .await;
     match registration {
         Ok(user) => {
             let response = http_response_builder::ok(user);

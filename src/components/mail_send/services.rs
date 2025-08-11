@@ -3,43 +3,34 @@ use lettre::message::Mailbox;
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{Message, SmtpTransport, Transport};
 use std::env;
+use actix_web::web;
+use crate::components::config::ConfigService;
 
 #[derive(Clone)]
 pub struct MailSendService {
-    email: String,
-    password: String,
-    smtp_password: String,
-    port: String,
+
 }
 
 impl MailSendService {
     pub fn new() -> Self {
-        let email = env::var("EMAIL_ADDRESS").expect("EMAIL_ADDRESS must be set");
-        let password = env::var("EMAIL_PASSWORD").expect("EMAIL_PASSWORD must be set");
-        let smtp_password = env::var("SMTP_PASSWORD").expect("SMTP_PASSWORD must be set");
-        let port = env::var("PORT_HOST").expect("PORT_HOST must be set");
-        Self {
-            email,
-            password,
-            smtp_password,
-            port,
-        }
+       MailSendService{}
     }
 
     pub fn send_mail(
         &self,
         email: String,
         token: String,
+        config_service: &ConfigService,
     ) -> Result<(), lettre::transport::smtp::Error> {
         // Construct the full verification URL using the provided token.
-        let verification_link = format!("{}/v1/auth/verify/{}", self.port, token);
+        let verification_link = format!("{}/v1/auth/verify/{}", config_service.port_host, token);
 
         // Build the email message dynamically.
         // The recipient is now the 'email' parameter.
         let email_message = Message::builder()
             .from(Mailbox::new(
                 Option::from("Verified email no replay".to_owned()),
-                self.email.parse().unwrap(),
+                config_service.email_address.parse().unwrap(),
             ))
             // Use the provided `email` parameter for the recipient
             .to("nechiforelsamuel@gmail.com".parse().unwrap())
@@ -52,9 +43,9 @@ impl MailSendService {
             ))
             .unwrap();
 
-        let creds = Credentials::new(self.email.to_owned(), self.smtp_password.to_owned());
+        let creds = Credentials::new(config_service.email_address.to_owned(), config_service.smtp_password.to_owned());
 
-        let mailer = SmtpTransport::relay("smtp.gmail.com")
+        let mailer = SmtpTransport::relay(config_service.smtp_transport.as_str())
             .unwrap()
             .credentials(creds)
             .build();

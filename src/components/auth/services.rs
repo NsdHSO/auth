@@ -7,6 +7,7 @@ use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use actix_web::dev::ConnectionInfo;
 use sea_orm::{ActiveEnum, ActiveModelTrait, DatabaseConnection};
+use crate::components::config::ConfigService;
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -34,6 +35,7 @@ impl AuthService {
         &self,
         payload: Option<AuthRequestBody>,
         conn_info: ConnectionInfo,
+        service_config: &ConfigService
     ) -> Result<Option<RegisterResponseBody>, CustomError> {
         let payload = payload.ok_or_else(|| {
             CustomError::new(
@@ -69,7 +71,7 @@ impl AuthService {
                         match token_creation_result {
                             Ok(_token) => {
                                 let _ = self.mail_send_service
-                                    .send_mail(model.email.clone(), _token.token.clone());
+                                    .send_mail(model.email.clone(), _token.token.clone(), service_config);
                                 Ok(Some(RegisterResponseBody {
                                     user_id: model.id.to_string(),
                                     email: model.email,
