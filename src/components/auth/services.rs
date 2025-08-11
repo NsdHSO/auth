@@ -77,7 +77,6 @@ impl AuthService {
                                 }))
                             }
                             Err(token_err) => {
-                                // If token creation failed, return the error
                                 Err(CustomError::new(
                                     HttpCodeW::InternalServerError,
                                     token_err.to_string(),
