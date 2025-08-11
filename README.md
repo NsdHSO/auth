@@ -17,24 +17,33 @@ A Rust-based authentication service built with Actix Web and SeaORM.
 
 ```
 auth/
-├── migration/          # Database migrations
+├── migration/                # Database migrations
 ├── src/
-│   ├── db/            # Database configuration
-│   ├── error_handler.rs # Custom error handling
-│   ├── http_response/ # HTTP response utilities
-│   ├── utils/         # Utility functions
-│   └── main.rs        # Application entry point
-├── Dockerfile         # Docker configuration
-├── docker-compose.test.yml # Test environment
+│   ├── components/
+│   │   ├── auth/            # Auth routes and service
+│   │   ├── config/          # ConfigService (env loader)
+│   │   ├── mail_send/       # Email sending (lettre)
+│   │   └── tokens/          # Token management
+│   ├── db/                  # Database configuration
+│   ├── entity/              # SeaORM entities
+│   ├── http_response/       # HTTP response utilities and error handler
+│   ├── utils/               # Utility functions
+│   └── main.rs              # Application entry point
+├── Dockerfile
+├── docker-compose.test.yml
 └── README.md
 ```
 
 ## Components
 
-- **Utils**: Helper functions for authentication, validation, and date parsing
-- **HTTP Response**: Standardized HTTP response handling
-- **DB**: Database connection and configuration
-- **Error Handler**: Custom error types and response handling
+- Auth: Registration, login, logout, refresh, email verification
+- Tokens: Creation and validation of verification/access/refresh tokens
+- Config: ConfigService for centralized environment/config loading used across the app
+- Mail Send: Outbound email via lettre (SMTP). Verification link sent as {PORT_HOST}/v1/auth/verify/{token}
+- HTTP Response: Standardized HTTP response handling and error mapping
+- DB: Database connection and configuration
+- Utils: Helper functions for authentication, validation, and dates
+- Entities: SeaORM entities and enums
 
 ## Getting Started
 
