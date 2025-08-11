@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/NsdHSO/auth/compare/v1.12.0...v1.13.0) (2025-08-11)
+
+
+### Features
+
+* 🎸 move the config state in a service ([d57cf6c](https://github.com/NsdHSO/auth/commit/d57cf6c32cf07800c4321101e686636773ed2b60))
+
 # [1.12.0](https://github.com/NsdHSO/auth/compare/v1.11.0...v1.12.0) (2025-08-11)
 
 
