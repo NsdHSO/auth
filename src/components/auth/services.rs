@@ -151,7 +151,7 @@ impl AuthService {
                 HttpCodeW::Forbidden => {
                     return Err(CustomError::new(HttpCodeW::Forbidden, "Token not found or None".to_string()))
                 }
-                _ => Err(e), // Or handle other error types here
+                _ => Err(e), 
             },
         }
     }
