@@ -1,9 +1,11 @@
 use super::services::AuthService;
 use crate::components::auth::local_enum::Info;
 use crate::components::config::ConfigService;
+use crate::config_service;
 use crate::entity::users::AuthRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::http_response_builder;
+use actix_web::cookie::{time, Cookie};
 use actix_web::dev::ConnectionInfo;
 use actix_web::{get, post, web, HttpResponse};
 
@@ -34,9 +36,14 @@ pub async fn login(
 ) -> Result<HttpResponse, CustomError> {
     let registration = service.login(payload.0, conn_info).await;
     match registration {
-        Ok(user) => {
-            let response = http_response_builder::ok(user);
-            Ok(HttpResponse::Ok().json(response))
+        Ok(payloadAuth) => {
+            let response = http_response_builder::ok(payloadAuth.clone().unwrap().body);
+            let refresh_cookie = Cookie::build("refresh_token", payloadAuth.unwrap().refresh_token)
+                .path("/")
+                .max_age(time::Duration::days(config_service().refresh_token_max_age))
+                .http_only(true)
+                .finish();
+            Ok(HttpResponse::Ok().cookie(refresh_cookie).json(response))
         }
         Err(err) => Err(err),
     }

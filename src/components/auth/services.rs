@@ -1,13 +1,14 @@
+use crate::components::auth::functions::login_logic;
 use crate::components::config::ConfigService;
 use crate::components::mail_send::MailSendService;
 use crate::components::tokens::TokensService;
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
-use crate::entity::users::{ActiveModel, AuthRequestBody, AuthResponseBody, Model, RegisterResponseBody};
+use crate::entity::users::{AuthRequestBody, AuthResponseBody, RegisterResponseBody};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use actix_web::dev::ConnectionInfo;
-use sea_orm::{ActiveEnum, ActiveModelTrait, DatabaseConnection};
+use sea_orm::{ActiveEnum, DatabaseConnection};
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -99,47 +100,7 @@ impl AuthService {
         payload: AuthRequestBody,
         conn_info: ConnectionInfo,
     ) -> Result<Option<AuthResponseBody>, CustomError> {
-        let ip_address = conn_info
-            .realip_remote_addr()
-            .map(|addr| addr.to_string())
-            .unwrap_or_else(|| "unknown".to_string());
-
-        let user = self
-            .users_service
-            .find("email", SearchValue::String(payload.email.to_string()))
-            .await;
-        let user_model = user?;
-        let check_pass = self
-            .users_service
-            .check_credentials_and_email_verification(payload, ip_address, user_model)
-            .await.unwrap_or_else(|value| {
-            match value {
-                Ok(e) => {
-                    Err(CustomError::new(HttpCodeW::Unauthorized, format!("Invalid credentials, {:?}", e)))
-                }
-                Err(e) => {
-                    Err(CustomError::new(HttpCodeW::Unauthorized, format!("Invalid credentials, {:?}", e)))
-                }
-            }
-        });
-        match check_pass {
-            Ok(model) => {
-                let active_model: ActiveModel = model;
-                let update = active_model.update(&self.conn).await;
-                match update {
-                    Ok(update_model) => Ok(Some(AuthResponseBody {
-                        email: Default::default(),
-                        access_token: Default::default(),
-                        username: Default::default(),
-                    })),
-                    Err(_) => Err(CustomError::new(
-                        HttpCodeW::InternalServerError,
-                        "Failed to update user".to_string(),
-                    )),
-                }
-            }
-            Err(e) => Err(e),
-        }
+        login_logic(&self.users_service, payload, conn_info, &self.conn, &self.tokens_service).await?
     }
 
     pub async fn verify_email(
@@ -151,7 +112,7 @@ impl AuthService {
             .realip_remote_addr()
             .map(|addr| addr.to_string())
             .unwrap_or_else(|| "unknown".to_string());
-        let result = self.tokens_service.find_token(token, ip_address).await;
+        let result = self.tokens_service.set_verified_email(token, ip_address).await;
 
         match result {
             Ok(value) => Ok(value),

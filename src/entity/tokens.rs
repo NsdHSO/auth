@@ -17,6 +17,8 @@ pub struct Model {
     #[sea_orm(unique)]
     pub token: String,
 
+    pub refresh_token: String,
+
     pub token_type: TokenType,
 
     pub expires_at: DateTimeWithTimeZone,
@@ -103,4 +105,9 @@ impl Model {
         let threshold = chrono::Utc::now() + chrono::Duration::minutes(minutes);
         self.expires_at.with_timezone(&chrono::Utc) <= threshold
     }
+}
+
+pub enum ValueFilterBy {
+    String(String),
+    Uuid(Uuid),
 }
