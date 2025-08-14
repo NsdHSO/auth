@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/NsdHSO/auth/compare/v1.16.0...v1.17.0) (2025-08-14)
+
+
+### Features
+
+* 🎸 added logic refresh token ([741ee08](https://github.com/NsdHSO/auth/commit/741ee08f08ad5ed3189a4e2ece96ebb967aed20d))
+
 # [1.16.0](https://github.com/NsdHSO/auth/compare/v1.15.0...v1.16.0) (2025-08-12)
 
 
