@@ -402,7 +402,7 @@ dependencies = [
 
 [[package]]
 name = "auth"
-version = "1.14.0"
+version = "1.15.0"
 dependencies = [
  "actix-cors",
  "actix-rt",
@@ -426,6 +426,7 @@ dependencies = [
  "sea-orm",
  "serde",
  "serde_json",
+ "sha2",
  "tokio",
  "uuid",
 ]

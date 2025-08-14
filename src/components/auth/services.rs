@@ -1,4 +1,6 @@
-use crate::components::auth::functions::login_logic;
+use std::future::Future;
+use actix_web::cookie::Cookie;
+use crate::components::auth::functions::{login_logic, verify_jwt_token, TokenDetails};
 use crate::components::config::ConfigService;
 use crate::components::mail_send::MailSendService;
 use crate::components::tokens::TokensService;
@@ -8,7 +10,12 @@ use crate::entity::users::{AuthRequestBody, AuthResponseBody, RegisterResponseBo
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use actix_web::dev::ConnectionInfo;
-use sea_orm::{ActiveEnum, DatabaseConnection};
+use actix_web::web::service;
+use jsonwebtoken::errors::Error;
+use sea_orm::{ActiveEnum, DatabaseConnection, DatabaseTransaction, Iden, TransactionTrait};
+use crate::config_service;
+use crate::entity::tokens::Model;
+use crate::http_response::HttpCodeW::InternalServerError;
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -30,6 +37,44 @@ impl AuthService {
             mail_send_service: MailSendService::new(),
             tokens_service: tokens_service.clone(),
         }
+    }
+
+    pub async fn refresh(&self, cookie_refresh_token: Option<Cookie<'_>>) -> Result<Option<AuthResponseBody>, CustomError> {
+        let refresh_token  =  match cookie_refresh_token {
+            None => {
+                return Err(CustomError::new(HttpCodeW::Unauthorized, "Missing refresh token".to_string()))
+            }
+            Some(v) =>
+                v.value().to_string()
+
+        };
+
+        let old_token_model = match self.tokens_service.is_token_available(&refresh_token).await {
+            Ok(Some(model)) => model,
+            _ => {
+                return Err(CustomError::new(HttpCodeW::Unauthorized, "Invalid refresh token".to_string()));
+            }
+        };
+
+        let user_id = old_token_model.user_id;
+        let txn = self.conn.begin().await.map_err(|e| {
+            CustomError::new(InternalServerError, format!("Txn begin error: {e}"))
+        })?;
+
+        match TokensService::revoke_token(old_token_model, &txn).await {
+            Ok(_) => {
+                // If revoke_token succeeds, commit the transaction.
+                txn.commit().await.map_err(|e| {
+                    CustomError::new(InternalServerError, format!("Txn commit error: {e}"))
+                })?;
+            },
+            Err(e) => {
+                txn.rollback().await.expect("Failed to rollback transaction");
+                return Err(CustomError::new(InternalServerError, format!("Token revoke error: {e}")));
+            }
+        };
+        Ok(Some(AuthResponseBody{ body: Default::default(), refresh_token: format!("{:?}", refresh_token) }))
+
     }
 
     pub async fn register(
@@ -100,7 +145,14 @@ impl AuthService {
         payload: AuthRequestBody,
         conn_info: ConnectionInfo,
     ) -> Result<Option<AuthResponseBody>, CustomError> {
-        login_logic(&self.users_service, payload, conn_info, &self.conn, &self.tokens_service).await?
+        login_logic(
+            &self.users_service,
+            payload,
+            conn_info,
+            &self.conn,
+            &self.tokens_service,
+        )
+        .await?
     }
 
     pub async fn verify_email(
@@ -112,7 +164,10 @@ impl AuthService {
             .realip_remote_addr()
             .map(|addr| addr.to_string())
             .unwrap_or_else(|| "unknown".to_string());
-        let result = self.tokens_service.set_verified_email(token, ip_address).await;
+        let result = self
+            .tokens_service
+            .set_verified_email(token, ip_address)
+            .await;
 
         match result {
             Ok(value) => Ok(value),

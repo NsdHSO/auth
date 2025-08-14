@@ -1,7 +1,10 @@
 use base64::engine::general_purpose;
 use base64::Engine;
+use base64::engine::general_purpose::{STANDARD, URL_SAFE_NO_PAD};
 use jsonwebtoken::{self, Algorithm, EncodingKey, Header};
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -79,4 +82,17 @@ pub fn verify_jwt_token(
         user_id,
         expires_in: None,
     })
+}
+// helper: generate opaque refresh (raw + hash)
+fn hash_refresh(raw: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(raw.as_bytes());
+    STANDARD.encode(hasher.finalize())
+}
+pub fn generate_opaque_refresh() -> (String, String) {
+    let mut bytes = [0u8; 32];
+    rand::thread_rng().fill_bytes(&mut bytes);
+    let raw = URL_SAFE_NO_PAD.encode(&bytes);
+    let hash = hash_refresh(&raw);
+    (raw, hash)
 }

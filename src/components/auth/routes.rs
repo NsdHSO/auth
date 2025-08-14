@@ -7,7 +7,7 @@ use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::http_response_builder;
 use actix_web::cookie::{time, Cookie};
 use actix_web::dev::ConnectionInfo;
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{get, post, web, HttpRequest, HttpResponse};
 
 #[post("/auth/register")]
 pub async fn register(
@@ -20,6 +20,23 @@ pub async fn register(
         .register(Option::from(payload.0), conn_info, &service_config)
         .await;
     match registration {
+        Ok(user) => {
+            let response = http_response_builder::ok(user);
+            Ok(HttpResponse::Ok().json(response))
+        }
+        Err(err) => Err(err),
+    }
+}
+
+#[post("/auth/refresh")]
+pub async fn refresh(
+    req: HttpRequest,
+    service: web::Data<AuthService>,
+    conn_info: ConnectionInfo,
+) -> Result<HttpResponse, CustomError> {
+    let refresh = service
+        .refresh(req.cookie("refresh_token"));
+    match refresh.await {
         Ok(user) => {
             let response = http_response_builder::ok(user);
             Ok(HttpResponse::Ok().json(response))
@@ -70,4 +87,5 @@ pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(register);
     config.service(login);
     config.service(verify_email);
+    config.service(refresh);
 }

@@ -17,7 +17,7 @@ pub struct Model {
     #[sea_orm(unique)]
     pub token: String,
 
-    pub refresh_token: String,
+    pub refresh_token: Option<String>,
 
     pub token_type: TokenType,
 

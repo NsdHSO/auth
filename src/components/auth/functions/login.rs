@@ -50,9 +50,7 @@ pub async fn login_logic(
                         config_service().access_token_max_age,
                         config_service().access_token_private_key.to_owned(),
                     );
-                    let token_db = tokens_service
-                        .find_by("user_id", ValueFilterBy::Uuid(update_model.id))
-                        .await;
+                    let(refresh_raw, _row) = tokens_service.create_refresh_token_for_user(update_model.id, config_service().refresh_token_max_age).await?;
                     match jwt_token {
                         Ok(token_details) => Ok(Some(AuthResponseBody {
                             body: BodyToken {
@@ -60,7 +58,7 @@ pub async fn login_logic(
                                 access_token: token_details.token.unwrap_or_default(),
                                 username: update_model.username.clone(),
                             },
-                            refresh_token: token_db?.refresh_token,
+                            refresh_token: refresh_raw,
                         })),
                         Err(e) => {
                             println!("JWT generation error: {:?}", e);
