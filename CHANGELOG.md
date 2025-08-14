@@ -1,3 +1,11 @@
+# [1.16.0](https://github.com/NsdHSO/auth/compare/v1.15.0...v1.16.0) (2025-08-12)
+
+
+### Features
+
+* 🎸 added good naming for payload auth ([ce49baf](https://github.com/NsdHSO/auth/commit/ce49baf1ce00621392a39b37f1ae3d666424ea2d))
+* 🎸 added refresh token stored in db ([4a68302](https://github.com/NsdHSO/auth/commit/4a6830232d4e5ba5700fa7a617105722ba879362))
+
 # [1.15.0](https://github.com/NsdHSO/auth/compare/v1.14.0...v1.15.0) (2025-08-11)
 
 
