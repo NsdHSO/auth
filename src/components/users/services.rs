@@ -111,7 +111,7 @@ impl UsersService {
     pub async fn check_credentials_and_email_verification(
         &self,
         payload: AuthRequestBody,
-        ip_address: String,
+        ip_address: &String,
         user_model: Model,
     ) -> Result<Result<ActiveModel, CustomError>, Result<Option<Model>, CustomError>> {
         if (user_model.needs_email_verification()) {
@@ -136,7 +136,7 @@ impl UsersService {
         Ok(check_pass)
     }
 
-    fn add_details_login(active_user: &mut ActiveModel, new_login: Value) {
+    pub fn add_details_login(active_user: &mut ActiveModel, new_login: Value) {
         let mut login_history: Vec<Value> = match &active_user.login_history {
             Unchanged(Value::Array(array)) => array.clone(),
             Set(Value::Array(array)) => array.clone(),

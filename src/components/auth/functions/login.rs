@@ -3,12 +3,13 @@ use crate::components::tokens::TokensService;
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
 use crate::config_service;
-use crate::entity::tokens::ValueFilterBy;
 use crate::entity::users::{ActiveModel, AuthRequestBody, AuthResponseBody, BodyToken};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use actix_web::dev::ConnectionInfo;
 use sea_orm::{ActiveModelTrait, DatabaseConnection};
+use serde_json::json;
+use crate::utils::helpers::now_date_time_utc;
 
 pub async fn login_logic(
     users_service: &UsersService,
@@ -27,7 +28,7 @@ pub async fn login_logic(
         .await;
     let user_model = user?;
     let check_pass = users_service
-        .check_credentials_and_email_verification(payload, ip_address, user_model)
+        .check_credentials_and_email_verification(payload, &ip_address, user_model)
         .await
         .unwrap_or_else(|value| match value {
             Ok(e) => Err(CustomError::new(
@@ -41,7 +42,13 @@ pub async fn login_logic(
         });
     Ok(match check_pass {
         Ok(model) => {
-            let active_model: ActiveModel = model;
+            let mut active_model: ActiveModel = model;
+            let new_login = json!({
+                "timestamp": now_date_time_utc(),
+                "notes": "User Logged",
+                "ip_address": ip_address,
+            });
+            UsersService::add_details_login(&mut active_model, new_login);
             let update = active_model.update(conn).await;
             match update {
                 Ok(update_model) => {
@@ -50,7 +57,12 @@ pub async fn login_logic(
                         config_service().access_token_max_age,
                         config_service().access_token_private_key.to_owned(),
                     );
-                    let(refresh_raw, _row) = tokens_service.create_refresh_token_for_user(update_model.id, config_service().refresh_token_max_age).await?;
+                    let (refresh_raw, _row) = tokens_service
+                        .create_refresh_token_for_user(
+                            update_model.id,
+                            config_service().refresh_token_max_age,
+                        )
+                        .await?;
                     match jwt_token {
                         Ok(token_details) => Ok(Some(AuthResponseBody {
                             body: BodyToken {
