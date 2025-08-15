@@ -1,3 +1,10 @@
+# [1.19.0](https://github.com/NsdHSO/auth/compare/v1.18.0...v1.19.0) (2025-08-15)
+
+
+### Features
+
+* 🎸 added introspect sesion ([fbeddcd](https://github.com/NsdHSO/auth/commit/fbeddcd14d61990e77d1c27732ed63f67a60ac15))
+
 # [1.18.0](https://github.com/NsdHSO/auth/compare/v1.17.0...v1.18.0) (2025-08-15)
 
 
