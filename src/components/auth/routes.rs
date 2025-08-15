@@ -1,7 +1,9 @@
 use super::services::AuthService;
+use crate::components::auth::functions::verify_jwt_token;
 use crate::components::auth::local_enum::Info;
 use crate::components::config::ConfigService;
 use crate::config_service;
+use crate::entity::tokens::{IntrospectRequest, IntrospectResponse};
 use crate::entity::users::AuthRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::http_response_builder;
@@ -34,8 +36,7 @@ pub async fn refresh(
     service: web::Data<AuthService>,
     conn_info: ConnectionInfo,
 ) -> Result<HttpResponse, CustomError> {
-    let refresh = service
-        .refresh(req.cookie("refresh_token"));
+    let refresh = service.refresh(req.cookie("refresh_token"));
     match refresh.await {
         Ok(user) => {
             let response = http_response_builder::ok(user.clone().unwrap().body);
@@ -88,9 +89,30 @@ pub async fn verify_email(
         Err(err) => Err(err),
     }
 }
+
+#[post("/auth/introspect")]
+pub async fn introspect(
+    payload: web::Json<IntrospectRequest>,
+) -> Result<HttpResponse, CustomError> {
+    let public_key_b64 = config_service().access_token_public_key.clone();
+    match verify_jwt_token(public_key_b64, &payload.token) {
+        Ok(details) => Ok(HttpResponse::Ok().json(IntrospectResponse {
+            active: true,
+            sub: Some(details.user_id.to_string()),
+            token_uuid: Some(details.token_uuid.to_string()),
+        })),
+        Err(_) => Ok(HttpResponse::Ok().json(IntrospectResponse {
+            active: false,
+            sub: None,
+            token_uuid: None,
+        })),
+    }
+}
+
 pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(register);
     config.service(login);
     config.service(verify_email);
     config.service(refresh);
+    config.service(introspect);
 }

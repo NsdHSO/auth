@@ -111,3 +111,16 @@ pub enum ValueFilterBy {
     String(String),
     Uuid(Uuid),
 }
+
+
+#[derive(Debug, Deserialize)]
+pub struct IntrospectRequest {
+    pub token: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct IntrospectResponse {
+    pub active: bool,
+    pub sub: Option<String>,
+    pub token_uuid: Option<String>,
+}
