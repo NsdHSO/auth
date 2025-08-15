@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/NsdHSO/auth/compare/v1.19.0...v1.20.0) (2025-08-15)
+
+
+### Features
+
+* 🎸 added optional to send the username ([7008103](https://github.com/NsdHSO/auth/commit/7008103e24059bc01601989df02ab3b579fb7457))
+
 # [1.19.0](https://github.com/NsdHSO/auth/compare/v1.18.0...v1.19.0) (2025-08-15)
 
 
