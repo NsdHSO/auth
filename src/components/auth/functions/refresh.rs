@@ -21,7 +21,11 @@ pub async fn refresh_logic(
         Some(v) => v.value().to_string(),
     };
 
-    let old_token_model = match tokens_service.is_token_available(&refresh_token).await {
+    let txn = match conn.begin().await {
+        Ok(t) => t,
+        Err(e) => return Err(CustomError::new(InternalServerError, format!("Txn begin error: {e}"))),
+    };
+    let old_token_model = match tokens_service.is_token_available(&refresh_token, &txn).await {
         Ok(Some(model)) => model,
         Ok(None) => {
             return Err(CustomError::new(
@@ -36,10 +40,6 @@ pub async fn refresh_logic(
 
     let user_id = old_token_model.user_id;
 
-    let txn = match conn.begin().await {
-        Ok(t) => t,
-        Err(e) => return Err(CustomError::new(InternalServerError, format!("Txn begin error: {e}"))),
-    };
 
     if let Err(e) = TokensService::revoke_token(old_token_model, &txn).await {
         let _ = txn.rollback().await;

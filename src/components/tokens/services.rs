@@ -37,23 +37,45 @@ impl TokensService {
     pub async fn find_refresh_by_raw(
         &self,
         raw: &str,
+        txn: &DatabaseTransaction,
     ) -> Result<Option<Model>, CustomError> {
         let hashed = hash_refresh(raw);
         Entity::find()
             .filter(Column::RefreshToken.eq(hashed))
-            .one(&self.conn)
+            .one(txn)
             .await
-            .map_err(|e| CustomError::new(HttpCodeW::InternalServerError, format!("Database error: {e}")))
+            .map_err(|e| {
+                CustomError::new(
+                    HttpCodeW::InternalServerError,
+                    format!("Database error: {e}"),
+                )
+            })
     }
     pub async fn is_token_available(
         &self,
         raw_refresh_token: &String,
+        txn: &DatabaseTransaction,
     ) -> Result<Option<Model>, CustomError> {
-        let found = self.find_refresh_by_raw(&raw_refresh_token).await?;
+        let found = self.find_refresh_by_raw(&raw_refresh_token, &txn).await?;
         let model = match found {
-            None => return Err(CustomError::new(HttpCodeW::Unauthorized, "Invalid refresh token".into())),
-            Some(m) if m.is_revoked => return Err(CustomError::new(HttpCodeW::Unauthorized, "Refresh token revoked".into())),
-            Some(m) if m.is_expired() => return Err(CustomError::new(HttpCodeW::Unauthorized, "Refresh token expired".into())),
+            None => {
+                return Err(CustomError::new(
+                    HttpCodeW::Unauthorized,
+                    "Invalid refresh token".into(),
+                ))
+            }
+            Some(m) if m.is_revoked => {
+                return Err(CustomError::new(
+                    HttpCodeW::Unauthorized,
+                    "Refresh token revoked".into(),
+                ))
+            }
+            Some(m) if m.is_expired() => {
+                return Err(CustomError::new(
+                    HttpCodeW::Unauthorized,
+                    "Refresh token expired".into(),
+                ))
+            }
             Some(m) => m,
         };
         Ok(Some(model))
