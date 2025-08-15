@@ -1,3 +1,12 @@
+# [1.18.0](https://github.com/NsdHSO/auth/compare/v1.17.0...v1.18.0) (2025-08-15)
+
+
+### Features
+
+* 🎸 added logic refresh token ([1ec94d0](https://github.com/NsdHSO/auth/commit/1ec94d026f9b1676cf762b4ee1ea7c1f0639207b))
+* 🎸 added transaction before ([10a9dbc](https://github.com/NsdHSO/auth/commit/10a9dbc2b8c2442212ab13f1963d2f770c5aaa87))
+* 🎸 added transaction before ([77d55c8](https://github.com/NsdHSO/auth/commit/77d55c8433f1bcd6a3f177435918d7db2909453c))
+
 # [1.17.0](https://github.com/NsdHSO/auth/compare/v1.16.0...v1.17.0) (2025-08-14)
 
 
