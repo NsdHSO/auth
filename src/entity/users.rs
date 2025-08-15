@@ -133,7 +133,7 @@ impl Model {
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct AuthRequestBody {
     pub email: String,
-    pub username: String,
+    pub username: Option<String>,
     pub password: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,

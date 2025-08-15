@@ -190,7 +190,7 @@ impl UsersService {
         ActiveModel {
             id: Set(Uuid::new_v4()),
             email: Set(payload.email),
-            username: Set(payload.username),
+            username: Set(payload.username.unwrap()),
             password_hash: Set(hashed),
             first_name: Set(payload.first_name),
             last_name: Set(payload.last_name),
