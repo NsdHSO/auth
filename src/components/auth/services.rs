@@ -1,6 +1,4 @@
-use std::future::Future;
-use actix_web::cookie::Cookie;
-use crate::components::auth::functions::{login_logic, verify_jwt_token, TokenDetails};
+use crate::components::auth::functions::{login_logic, refresh_logic};
 use crate::components::config::ConfigService;
 use crate::components::mail_send::MailSendService;
 use crate::components::tokens::TokensService;
@@ -9,13 +7,9 @@ use crate::components::users::UsersService;
 use crate::entity::users::{AuthRequestBody, AuthResponseBody, RegisterResponseBody};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
+use actix_web::cookie::Cookie;
 use actix_web::dev::ConnectionInfo;
-use actix_web::web::service;
-use jsonwebtoken::errors::Error;
-use sea_orm::{ActiveEnum, DatabaseConnection, DatabaseTransaction, Iden, TransactionTrait};
-use crate::config_service;
-use crate::entity::tokens::Model;
-use crate::http_response::HttpCodeW::InternalServerError;
+use sea_orm::{ActiveEnum, DatabaseConnection};
 
 #[derive(Clone)]
 pub struct AuthService {
@@ -39,42 +33,17 @@ impl AuthService {
         }
     }
 
-    pub async fn refresh(&self, cookie_refresh_token: Option<Cookie<'_>>) -> Result<Option<AuthResponseBody>, CustomError> {
-        let refresh_token  =  match cookie_refresh_token {
-            None => {
-                return Err(CustomError::new(HttpCodeW::Unauthorized, "Missing refresh token".to_string()))
-            }
-            Some(v) =>
-                v.value().to_string()
-
-        };
-
-        let old_token_model = match self.tokens_service.is_token_available(&refresh_token).await {
-            Ok(Some(model)) => model,
-            _ => {
-                return Err(CustomError::new(HttpCodeW::Unauthorized, "Invalid refresh token".to_string()));
-            }
-        };
-
-        let user_id = old_token_model.user_id;
-        let txn = self.conn.begin().await.map_err(|e| {
-            CustomError::new(InternalServerError, format!("Txn begin error: {e}"))
-        })?;
-
-        match TokensService::revoke_token(old_token_model, &txn).await {
-            Ok(_) => {
-                // If revoke_token succeeds, commit the transaction.
-                txn.commit().await.map_err(|e| {
-                    CustomError::new(InternalServerError, format!("Txn commit error: {e}"))
-                })?;
-            },
-            Err(e) => {
-                txn.rollback().await.expect("Failed to rollback transaction");
-                return Err(CustomError::new(InternalServerError, format!("Token revoke error: {e}")));
-            }
-        };
-        Ok(Some(AuthResponseBody{ body: Default::default(), refresh_token: format!("{:?}", refresh_token) }))
-
+    pub async fn refresh(
+        &self,
+        cookie_refresh_token: Option<Cookie<'_>>,
+    ) -> Result<Option<AuthResponseBody>, CustomError> {
+        refresh_logic(
+            &self.tokens_service,
+            &self.users_service,
+            &self.conn,
+            cookie_refresh_token,
+        )
+        .await
     }
 
     pub async fn register(

@@ -1,15 +1,14 @@
 // For a specific base64 engine
-use crate::components::auth::functions::generate_opaque_refresh;
+use crate::components::auth::functions::{generate_opaque_refresh, hash_refresh};
 // For base64 encoding
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
+use crate::entity;
 use crate::entity::tokens::{ActiveModel, Column, Entity, Model, ValueFilterBy};
-use crate::entity::TokenType;
 use crate::entity::TokenType::{EmailVerification, Refresh};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use crate::utils::helpers::now_date_time_utc;
-use crate::entity;
 use base64::engine::general_purpose;
 use base64::Engine;
 use chrono::Duration;
@@ -35,23 +34,29 @@ impl TokensService {
             users_service: users_service.clone(),
         }
     }
-
-    pub async fn is_token_available(
+    pub async fn find_refresh_by_raw(
         &self,
-        refresh_token: &String,
+        raw: &str,
     ) -> Result<Option<Model>, CustomError> {
+        let hashed = hash_refresh(raw);
         Entity::find()
-            .filter(Column::RefreshToken.eq(refresh_token))
-            .filter(Column::IsRevoked.eq(false))
-            .filter(Column::TokenType.eq(Refresh))
+            .filter(Column::RefreshToken.eq(hashed))
             .one(&self.conn)
             .await
-            .map_err(|e| {
-                CustomError::new(
-                    HttpCodeW::InternalServerError,
-                    format!("Database error: {}", e),
-                )
-            })
+            .map_err(|e| CustomError::new(HttpCodeW::InternalServerError, format!("Database error: {e}")))
+    }
+    pub async fn is_token_available(
+        &self,
+        raw_refresh_token: &String,
+    ) -> Result<Option<Model>, CustomError> {
+        let found = self.find_refresh_by_raw(&raw_refresh_token).await?;
+        let model = match found {
+            None => return Err(CustomError::new(HttpCodeW::Unauthorized, "Invalid refresh token".into())),
+            Some(m) if m.is_revoked => return Err(CustomError::new(HttpCodeW::Unauthorized, "Refresh token revoked".into())),
+            Some(m) if m.is_expired() => return Err(CustomError::new(HttpCodeW::Unauthorized, "Refresh token expired".into())),
+            Some(m) => m,
+        };
+        Ok(Some(model))
     }
     pub async fn revoke_token(
         model: Model,
@@ -87,19 +92,41 @@ impl TokensService {
         }
     }
 
-
     pub async fn create_refresh_token_for_user(
         &self,
         user_id: Uuid,
         refresh_ttl_minutes: i64,
     ) -> Result<(String, Model), DbErr> {
-        let (raw, hash) = generate_opaque_refresh();
-        let expires_at = now_date_time_utc() + chrono::Duration::minutes(refresh_ttl_minutes);
+        let (raw, active_model) = Self::create_active_model_for_token(user_id, refresh_ttl_minutes);
 
-        let activeModel = ActiveModel {
+        let model = active_model.insert(&self.conn).await?;
+        Ok((raw, model))
+    }
+
+    pub async fn create_refresh_token_for_user_txn(
+        &self,
+        user_id: Uuid,
+        refresh_ttl_minutes: i64,
+        txn: &DatabaseTransaction,
+    ) -> Result<(String, Model), DbErr> {
+        let (raw, active_model) = Self::create_active_model_for_token(user_id, refresh_ttl_minutes);
+
+        let model = active_model.insert(txn).await?;
+        Ok((raw, model))
+    }
+
+    fn create_active_model_for_token(
+        user_id: Uuid,
+        refresh_ttl_minutes: i64,
+    ) -> (String, ActiveModel) {
+        let (raw, hash) = generate_opaque_refresh();
+        let expires_at = now_date_time_utc() + Duration::minutes(refresh_ttl_minutes);
+        let unique_placeholder = Uuid::new_v4().to_string();
+
+        let active_model = ActiveModel {
             id: Set(Uuid::new_v4()),
             user_id: Set(user_id),
-            token: Set(String::new()), // optional/unused for refresh; keep empty or a marker
+            token: Set(unique_placeholder),
             token_type: Set(Refresh),
             expires_at: Set(DateTimeWithTimeZone::from(expires_at)),
             is_revoked: Set(false),
@@ -107,10 +134,9 @@ impl TokensService {
             updated_at: Set(DateTimeWithTimeZone::from(now_date_time_utc())),
             refresh_token: Set(Some(hash)),
         };
-
-        let model = activeModel.insert(&self.conn).await?;
-        Ok((raw, model))
+        (raw, active_model)
     }
+
     pub async fn create_token_for_user(&self, user_id: Uuid) -> Result<Model, DbErr> {
         let token = self.create_token(user_id);
 

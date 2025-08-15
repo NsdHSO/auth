@@ -84,7 +84,7 @@ pub fn verify_jwt_token(
     })
 }
 // helper: generate opaque refresh (raw + hash)
-fn hash_refresh(raw: &str) -> String {
+pub fn hash_refresh(raw: &str) -> String {
     let mut hasher = Sha256::new();
     hasher.update(raw.as_bytes());
     STANDARD.encode(hasher.finalize())

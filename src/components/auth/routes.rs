@@ -38,8 +38,13 @@ pub async fn refresh(
         .refresh(req.cookie("refresh_token"));
     match refresh.await {
         Ok(user) => {
-            let response = http_response_builder::ok(user);
-            Ok(HttpResponse::Ok().json(response))
+            let response = http_response_builder::ok(user.clone().unwrap().body);
+            let refresh_cookie = Cookie::build("refresh_token", user.unwrap().refresh_token)
+                .path("/")
+                .max_age(time::Duration::days(config_service().refresh_token_max_age))
+                .http_only(true)
+                .finish();
+            Ok(HttpResponse::Ok().cookie(refresh_cookie).json(response))
         }
         Err(err) => Err(err),
     }
