@@ -62,7 +62,6 @@ impl ConfigService {
             access_token_max_age: access_token_max_age.parse::<i64>().unwrap(),
             refresh_token_max_age: refresh_token_max_age.parse::<i64>().unwrap(),
             refresh_token_expires_in,
-            // Add the new keys here
             rust_log,
             schema_synchronize,
             host,
