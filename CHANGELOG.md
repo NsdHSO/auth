@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/NsdHSO/auth/compare/v1.21.0...v1.22.0) (2025-08-16)
+
+
+### Features
+
+* 🎸 sdfsd ([315b1fc](https://github.com/NsdHSO/auth/commit/315b1fcc7bff90f0dff1873e8d1b863e6b6a407f))
+
 # [1.21.0](https://github.com/NsdHSO/auth/compare/v1.20.0...v1.21.0) (2025-08-16)
 
 
