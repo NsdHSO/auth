@@ -5,7 +5,6 @@ fn get_env_var(var_name: &str) -> String {
 #[derive(Debug, Clone)]
 pub struct ConfigService {
     pub database_url: String,
-    pub client_origin: String,
 
     pub access_token_private_key: String,
     pub access_token_public_key: String,
@@ -33,7 +32,6 @@ pub struct ConfigService {
 impl ConfigService {
     pub fn new() -> Self {
         let database_url = get_env_var("DATABASE_URL");
-        let client_origin = get_env_var("CLIENT_ORIGIN");
 
         let access_token_private_key = get_env_var("ACCESS_TOKEN_PRIVATE_KEY");
         let access_token_public_key = get_env_var("ACCESS_TOKEN_PUBLIC_KEY");
@@ -58,7 +56,6 @@ impl ConfigService {
 
         ConfigService {
             database_url,
-            client_origin,
             access_token_private_key,
             access_token_public_key,
             access_token_expires_in,
