@@ -7,7 +7,7 @@ use crate::entity::tokens::{IntrospectRequest, IntrospectResponse};
 use crate::entity::users::AuthRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::http_response_builder;
-use actix_web::cookie::{time, Cookie};
+use actix_web::cookie::{time, Cookie, SameSite};
 use actix_web::dev::ConnectionInfo;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
 
@@ -30,20 +30,24 @@ pub async fn register(
     }
 }
 
+
 #[post("/auth/refresh")]
 pub async fn refresh(
     req: HttpRequest,
     service: web::Data<AuthService>,
-    conn_info: ConnectionInfo,
+    _conn_info: ConnectionInfo,
 ) -> Result<HttpResponse, CustomError> {
     let refresh = service.refresh(req.cookie("refresh_token"));
     match refresh.await {
         Ok(user) => {
-            let response = http_response_builder::ok(user.clone().unwrap().body);
-            let refresh_cookie = Cookie::build("refresh_token", user.unwrap().refresh_token)
+            let user = user.unwrap();
+            let response = http_response_builder::ok(user.body);
+            let refresh_cookie = Cookie::build("refresh_token", user.refresh_token)
                 .path("/")
                 .max_age(time::Duration::days(config_service().refresh_token_max_age))
+                .same_site(SameSite::Lax)     // was None
                 .http_only(true)
+                .secure(false)                 // HTTP on localhost
                 .finish();
             Ok(HttpResponse::Ok().cookie(refresh_cookie).json(response))
         }
@@ -55,16 +59,20 @@ pub async fn refresh(
 pub async fn login(
     payload: ValidatedJson<AuthRequestBody>,
     service: web::Data<AuthService>,
-    conn_info: ConnectionInfo,
+    _conn_info: ConnectionInfo,
 ) -> Result<HttpResponse, CustomError> {
-    let registration = service.login(payload.0, conn_info).await;
+    let registration = service.login(payload.0, _conn_info).await;
     match registration {
-        Ok(payloadAuth) => {
-            let response = http_response_builder::ok(payloadAuth.clone().unwrap().body);
-            let refresh_cookie = Cookie::build("refresh_token", payloadAuth.unwrap().refresh_token)
+        Ok(payload_auth) => {
+            let payload_auth = payload_auth.unwrap();
+            let response = http_response_builder::ok(payload_auth.body);
+            let refresh_cookie = Cookie::build("refresh_token", payload_auth.refresh_token)
+                // .domain("localhost")         // REMOVE on localhost
                 .path("/")
                 .max_age(time::Duration::days(config_service().refresh_token_max_age))
+                .same_site(SameSite::Lax)       // was None
                 .http_only(true)
+                .secure(false)                   // HTTP on localhost
                 .finish();
             Ok(HttpResponse::Ok().cookie(refresh_cookie).json(response))
         }
