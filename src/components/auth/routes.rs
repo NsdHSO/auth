@@ -45,9 +45,9 @@ pub async fn refresh(
             let refresh_cookie = Cookie::build("refresh_token", user.refresh_token)
                 .path("/")
                 .max_age(time::Duration::days(config_service().refresh_token_max_age))
-                .same_site(SameSite::Lax)     // was None
+                .same_site(SameSite::None)     // was None
                 .http_only(true)
-                .secure(false)                 // HTTP on localhost
+                .secure(true)                 // HTTP on localhost
                 .finish();
             Ok(HttpResponse::Ok().cookie(refresh_cookie).json(response))
         }
@@ -70,9 +70,9 @@ pub async fn login(
                 // .domain("localhost")         // REMOVE on localhost
                 .path("/")
                 .max_age(time::Duration::days(config_service().refresh_token_max_age))
-                .same_site(SameSite::Lax)       // was None
+                .same_site(SameSite::None)       // was None
                 .http_only(true)
-                .secure(false)                   // HTTP on localhost
+                .secure(true)                   // HTTP on localhost
                 .finish();
             Ok(HttpResponse::Ok().cookie(refresh_cookie).json(response))
         }
