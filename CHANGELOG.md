@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/NsdHSO/auth/compare/v1.22.0...v1.23.0) (2025-08-22)
+
+
+### Features
+
+* 🎸 added new roles and ([b924392](https://github.com/NsdHSO/auth/commit/b9243929da91fd8a70d68ebcb8dd6e6d4501fc86))
+
 # [1.22.0](https://github.com/NsdHSO/auth/compare/v1.21.0...v1.22.0) (2025-08-16)
 
 
