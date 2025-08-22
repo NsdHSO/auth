@@ -406,3 +406,31 @@ GET /v1/health/detailed         # Detailed health status
 - `HOST` - Server host (default: 127.0.0.1)
 - `PORT` - Server port (default: 4100)
 - `RUST_LOG` - Log level (default: debug)
+
+## RBAC: Roles & Permissions Matrix
+
+Below is a plain Markdown matrix (no Mermaid) of roles vs permissions.
+
+| Permission            | ADMIN | MODERATOR | USER | GUEST |
+|-----------------------|:-----:|:---------:|:----:|:-----:|
+| user.read             |   ✓   |     ✓     |      |       |
+| user.write            |   ✓   |           |      |       |
+| session.read          |   ✓   |     ✓     |      |       |
+| session.terminate     |   ✓   |     ✓     |      |       |
+| token.read            |   ✓   |           |  ✓   |       |
+| token.revoke          |   ✓   |           |      |       |
+| project.read          |   ✓   |     ✓     |  ✓   |   ✓   |
+| project.write         |   ✓   |     ✓     |      |       |
+| project.delete        |   ✓   |           |      |       |
+| appointment.create    |   ✓   |           |      |       |
+| appointment.read      |   ✓   |           |      |       |
+| appointment.update    |   ✓   |           |      |       |
+
+Legend:
+- ✓ granted
+- blank not granted
+
+Notes:
+- ADMIN is granted all current permissions by default and will receive newly added permissions via migrations.
+- User-specific overrides exist via `auth.user_permission_overrides` where `allow=true` adds a permission and `allow=false` removes it, regardless of role.
+- The JWT access token embeds the effective `perms` and `roles` claims so microservices can authorize without DB access.

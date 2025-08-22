@@ -6,7 +6,7 @@ use crate::http_response::HttpCodeW;
 use crate::http_response::HttpCodeW::InternalServerError;
 use actix_web::cookie::Cookie;
 use sea_orm::{DatabaseConnection, TransactionTrait};
-use crate::components::auth::functions::generate_jwt_token;
+use crate::components::auth::functions::{compute_roles_and_permissions, generate_jwt_token};
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
 
@@ -57,10 +57,20 @@ pub async fn refresh_logic(
         }
     };
 
+    let (roles, perms) = match compute_roles_and_permissions(conn, user_id).await {
+        Ok((r, p)) => (r, p),
+        Err(e) => {
+            let _ = txn.rollback().await;
+            return Err(CustomError::new(InternalServerError, format!("Failed to compute permissions: {e}")));
+        }
+    };
+
     let jwt = match generate_jwt_token(
         user_id,
         config_service().access_token_max_age,
         config_service().access_token_private_key.to_owned(),
+        perms,
+        roles,
     ) {
         Ok(v) => v,
         Err(_) => {

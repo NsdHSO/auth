@@ -1,4 +1,4 @@
-use crate::components::auth::functions::generate_jwt_token;
+use crate::components::auth::functions::{compute_roles_and_permissions, generate_jwt_token};
 use crate::components::tokens::TokensService;
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
@@ -52,10 +52,21 @@ pub async fn login_logic(
             let update = active_model.update(conn).await;
             match update {
                 Ok(update_model) => {
+                    let (roles, perms) = match compute_roles_and_permissions(conn, update_model.id).await {
+                        Ok((r, p)) => (r, p),
+                        Err(e) => {
+                            return Err(CustomError::new(
+                                HttpCodeW::InternalServerError,
+                                format!("Failed to compute permissions: {e}"),
+                            ));
+                        }
+                    };
                     let jwt_token = generate_jwt_token(
                         update_model.id,
                         config_service().access_token_max_age,
                         config_service().access_token_private_key.to_owned(),
+                        perms,
+                        roles,
                     );
                     let (refresh_raw, _row) = tokens_service
                         .create_refresh_token_for_user(
