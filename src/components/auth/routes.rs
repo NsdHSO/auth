@@ -6,7 +6,7 @@ use crate::config_service;
 use crate::entity::tokens::{IntrospectRequest, IntrospectResponse};
 use crate::entity::users::AuthRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
-use crate::http_response::http_response_builder;
+use crate::http_response::{http_response_builder, HttpCodeW};
 use actix_web::cookie::{time, Cookie, SameSite};
 use actix_web::dev::ConnectionInfo;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
@@ -29,7 +29,6 @@ pub async fn register(
         Err(err) => Err(err),
     }
 }
-
 
 #[post("/auth/refresh")]
 pub async fn refresh(
@@ -108,11 +107,17 @@ pub async fn introspect(
             sub: Some(details.user_id.to_string()),
             token_uuid: Some(details.token_uuid.to_string()),
         })),
-        Err(_) => Ok(HttpResponse::Ok().json(IntrospectResponse {
-            active: false,
-            sub: None,
-            token_uuid: None,
-        })),
+        Err(_) => Err(CustomError::new(
+            HttpCodeW::Unauthorized,
+            format!(
+                "{:?}",
+                IntrospectResponse {
+                    active: false,
+                    sub: None,
+                    token_uuid: None,
+                }
+            ),
+        )),
     }
 }
 
