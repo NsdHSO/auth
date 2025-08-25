@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/NsdHSO/auth/compare/v1.23.0...v1.24.0) (2025-08-22)
+
+
+### Features
+
+* 🎸 added the rbac roles matrx ([5dfc6e7](https://github.com/NsdHSO/auth/commit/5dfc6e74fe8a70697347a8a9796a91d5e05e62cb))
+
 # [1.23.0](https://github.com/NsdHSO/auth/compare/v1.22.0...v1.23.0) (2025-08-22)
 
 
