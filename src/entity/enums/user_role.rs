@@ -13,6 +13,8 @@ pub enum UserRole {
     Moderator,
     #[sea_orm(string_value = "GUEST")]
     Guest,
+    #[sea_orm(string_value = "OPERATOR")]
+    Operator,
 }
 
 #[allow(dead_code)]
@@ -23,6 +25,7 @@ impl UserRole {
             UserRole::User => "USER",
             UserRole::Moderator => "MODERATOR",
             UserRole::Guest => "GUEST",
+            UserRole::Operator => "OPERATOR",
         }
     }
 

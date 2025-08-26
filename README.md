@@ -411,26 +411,26 @@ GET /v1/health/detailed         # Detailed health status
 
 Below is a plain Markdown matrix (no Mermaid) of roles vs permissions.
 
-|| Permission            | ADMIN | MODERATOR | USER | GUEST |
-||-----------------------|:-----:|:---------:|:----:|:-----:|
-|| user.read             |   ✓   |     ✓     |      |       |
-|| user.write            |   ✓   |           |      |       |
-|| session.read          |   ✓   |     ✓     |      |       |
-|| session.terminate     |   ✓   |     ✓     |      |       |
-|| token.read            |   ✓   |           |  ✓   |       |
-|| token.revoke          |   ✓   |           |      |       |
-|| project.read          |   ✓   |     ✓     |  ✓   |   ✓   |
-|| project.write         |   ✓   |     ✓     |      |       |
-|| project.delete        |   ✓   |           |      |       |
-|| appointment.create    |   ✓   |     ✓     |      |       |
-|| appointment.read      |   ✓   |     ✓     |  ✓   |   ✓   |
-|| appointment.update    |   ✓   |           |      |       |
-|| emergency.create      |   ✓   |     ✓     |      |       |
-|| emergency.read        |       |           |      |       |
-|| emergency.update      |       |           |      |       |
-|| dashboard.create      |   ✓   |     ✓     |      |       |
-|| dashboard.read        |   ✓   |     ✓     |  ✓   |   ✓   |
-|| dashboard.update      |   ✓   |           |      |       |
+| Permission            | ADMIN | MODERATOR | OPERATOR | USER | GUEST |
+|-----------------------|:-----:|:---------:|:--------:|:----:|:-----:|
+| user.read             |   ✓   |     ✓     |          |      |       |
+| user.write            |   ✓   |           |          |      |       |
+| session.read          |   ✓   |     ✓     |          |      |       |
+| session.terminate     |   ✓   |     ✓     |          |      |       |
+| token.read            |   ✓   |           |          |  ✓   |       |
+| token.revoke          |   ✓   |           |          |      |       |
+| project.read          |   ✓   |     ✓     |          |  ✓   |   ✓   |
+| project.write         |   ✓   |     ✓     |          |      |       |
+| project.delete        |   ✓   |           |          |      |       |
+| appointment.create    |   ✓   |     ✓     |    ✓     |      |       |
+| appointment.read      |   ✓   |     ✓     |    ✓     |  ✓   |   ✓   |
+| appointment.update    |   ✓   |           |    ✓     |      |       |
+| emergency.create      |   ✓   |     ✓     |          |      |       |
+| emergency.read        |       |           |          |      |       |
+| emergency.update      |       |           |          |      |       |
+| dashboard.create      |   ✓   |     ✓     |    ✓     |      |       |
+| dashboard.read        |   ✓   |     ✓     |    ✓     |  ✓   |   ✓   |
+| dashboard.update      |   ✓   |           |    ✓     |      |       |
 
 Legend:
 - ✓ granted
