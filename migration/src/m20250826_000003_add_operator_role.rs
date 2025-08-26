@@ -16,10 +16,10 @@ impl MigrationTrait for Migration {
         ))
         .await?;
 
-        // Add OPERATOR to the Postgres enum for users.role
+// Add OPERATOR to the Postgres enum for users.role (type lives in public schema)
         db.execute(Statement::from_string(
             manager.get_database_backend(),
-            "ALTER TYPE auth.user_role ADD VALUE IF NOT EXISTS 'OPERATOR';".to_string(),
+            "ALTER TYPE public.user_role ADD VALUE IF NOT EXISTS 'OPERATOR';".to_string(),
         ))
         .await?;
 
