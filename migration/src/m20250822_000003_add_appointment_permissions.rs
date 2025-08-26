@@ -45,7 +45,53 @@ impl MigrationTrait for Migration {
             "#.to_string(),
         ))
         .await?;
+        // Map MODERATOR to these new permissions
+        db.execute(Statement::from_string(
+            manager.get_database_backend(),
+            r#"
+            INSERT INTO auth.role_permissions (role_id, permission_id)
+            SELECT r.id, p.id
+            FROM auth.roles r
+            JOIN auth.permissions p ON p.code IN (
+                'appointment.read', 'appointment.create'
+            )
+            WHERE r.code = 'MODERATOR'
+            ON CONFLICT DO NOTHING;
+            "#.to_string(),
+        ))
+            .await?;
 
+        // Map USER to these new permissions
+        db.execute(Statement::from_string(
+            manager.get_database_backend(),
+            r#"
+            INSERT INTO auth.role_permissions (role_id, permission_id)
+            SELECT r.id, p.id
+            FROM auth.roles r
+            JOIN auth.permissions p ON p.code IN (
+                'appointment.read'
+            )
+            WHERE r.code = 'USER'
+            ON CONFLICT DO NOTHING;
+            "#.to_string(),
+        ))
+            .await?;
+
+        // Map USER to these new permissions
+        db.execute(Statement::from_string(
+            manager.get_database_backend(),
+            r#"
+            INSERT INTO auth.role_permissions (role_id, permission_id)
+            SELECT r.id, p.id
+            FROM auth.roles r
+            JOIN auth.permissions p ON p.code IN (
+                'appointment.read'
+            )
+            WHERE r.code = 'GUEST'
+            ON CONFLICT DO NOTHING;
+            "#.to_string(),
+        ))
+            .await?;
         Ok(())
     }
 

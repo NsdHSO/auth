@@ -61,7 +61,8 @@ impl MigrationTrait for Migration {
             "#.to_string(),
         ))
             .await?;
-        // Map MODERATOR to these new permissions
+        
+        // Map USER to these new permissions
         db.execute(Statement::from_string(
             manager.get_database_backend(),
             r#"
@@ -69,9 +70,25 @@ impl MigrationTrait for Migration {
             SELECT r.id, p.id
             FROM auth.roles r
             JOIN auth.permissions p ON p.code IN (
-                'dashboard.create', 'dashboard.read'
+               'dashboard.read'
             )
-            WHERE r.code = 'MODERATOR'
+            WHERE r.code = 'USER'
+            ON CONFLICT DO NOTHING;
+            "#.to_string(),
+        ))
+            .await?;
+
+        // Map GUEST to these new permissions
+        db.execute(Statement::from_string(
+            manager.get_database_backend(),
+            r#"
+            INSERT INTO auth.role_permissions (role_id, permission_id)
+            SELECT r.id, p.id
+            FROM auth.roles r
+            JOIN auth.permissions p ON p.code IN (
+               'dashboard.read'
+            )
+            WHERE r.code = 'GUEST'
             ON CONFLICT DO NOTHING;
             "#.to_string(),
         ))
