@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/NsdHSO/auth/compare/v1.24.0...v1.25.0) (2025-08-25)
+
+
+### Features
+
+* 🎸 added custom error for introspect ([ef6731a](https://github.com/NsdHSO/auth/commit/ef6731a81954cd269aedb05c1913116fa9ea6c19))
+
 # [1.24.0](https://github.com/NsdHSO/auth/compare/v1.23.0...v1.24.0) (2025-08-22)
 
 
