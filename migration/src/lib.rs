@@ -10,6 +10,7 @@ mod m20250826_000001_add_emergency_permissions;
 mod m20250826_000002_add_dashboard_permissions;
 mod m20250826_000003_add_operator_role;
 mod m20250906_000001_sync_user_base_role;
+mod m20250906_000002_allow_multiple_user_roles;
 
 pub struct Migrator;
 
@@ -27,6 +28,7 @@ impl MigratorTrait for Migrator {
 Box::new(m20250826_000002_add_dashboard_permissions::Migration),
             Box::new(m20250826_000003_add_operator_role::Migration),
             Box::new(m20250906_000001_sync_user_base_role::Migration),
+            Box::new(m20250906_000002_allow_multiple_user_roles::Migration),
         ]
     }
 }
