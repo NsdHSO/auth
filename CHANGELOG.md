@@ -1,3 +1,13 @@
+# [1.26.0](https://github.com/NsdHSO/auth/compare/v1.25.0...v1.26.0) (2025-08-26)
+
+
+### Features
+
+* 🎸 added operator role ([1fa909d](https://github.com/NsdHSO/auth/commit/1fa909d0c534a39ab92f72c94f93062e43b2a7ac))
+* 🎸 added read for Guest ([2914dd3](https://github.com/NsdHSO/auth/commit/2914dd39a224d4e90e5f48a1508ac601f9211309))
+* 🎸 added role operator ([c046e70](https://github.com/NsdHSO/auth/commit/c046e700901f324b73f8538aeb8551dda53c3c03))
+* 🎸 added role operator ([e51da3a](https://github.com/NsdHSO/auth/commit/e51da3aaf96ef73f93a28fdb9e01f0d75aa143c3))
+
 # [1.25.0](https://github.com/NsdHSO/auth/compare/v1.24.0...v1.25.0) (2025-08-25)
 
 
