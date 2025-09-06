@@ -1,3 +1,11 @@
+# [1.27.0](https://github.com/NsdHSO/auth/compare/v1.26.0...v1.27.0) (2025-09-06)
+
+
+### Features
+
+* 🎸 added migration and enforce&sync user_base_role ([e12e023](https://github.com/NsdHSO/auth/commit/e12e02394258703ead4f4275ab0062d15dcf6553))
+* 🎸 multiple roles ([bd9ac5c](https://github.com/NsdHSO/auth/commit/bd9ac5cc6a0439bdf1e773b1641d45672e27ac4a))
+
 # [1.26.0](https://github.com/NsdHSO/auth/compare/v1.25.0...v1.26.0) (2025-08-26)
 
 
