@@ -1,13 +1,27 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -Eeuo pipefail
 
-# Set the database URL for the test database
-export DATABASE_URL="postgresql://fat_user:fat_pass@192.168.68.50:5440/fat_db"
+# Load DATABASE_URL from environment or .env (without overwriting an existing env var)
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  if [[ -f ".env" ]]; then
+    # shellcheck disable=SC1091
+    set -a
+    source .env
+    set +a
+  fi
+fi
 
-echo "Running database migrations..."
-echo "Database URL: $DATABASE_URL"
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  echo "ERROR: DATABASE_URL is not set. Set it in your environment or in .env" >&2
+  exit 1
+fi
 
-# Run the migrations, explicitly passing the variable's value
-cd migration
-cargo run -- --database-url "$DATABASE_URL" --database-schema auth
+# Ask for schema (e.g., auth or public), default to 'auth'
+read -r -p "Database schema to use [auth] (e.g., auth or public): " DB_SCHEMA
+DB_SCHEMA="${DB_SCHEMA:-auth}"
 
-echo "Migrations completed!"	
+echo "Running database migrations against schema: ${DB_SCHEMA} ..."
+# Execute without printing the URL to avoid exposing credentials
+cargo run --manifest-path migration/Cargo.toml -- --database-url "$DATABASE_URL" --database-schema "$DB_SCHEMA"
+
+echo "Migrations completed!"
