@@ -1,3 +1,13 @@
+# [1.28.0](https://github.com/NsdHSO/auth/compare/v1.27.0...v1.28.0) (2025-09-15)
+
+
+### Features
+
+* 🎸 added checks for duplication ([d10b57e](https://github.com/NsdHSO/auth/commit/d10b57eca97fac30d89a0a305b25369e34f88dcc))
+* 🎸 added get_users into routes ([1ccdf67](https://github.com/NsdHSO/auth/commit/1ccdf67ea73486bcc811547190b8dc75314ec35c))
+* 🎸 added search after index ([acfbd70](https://github.com/NsdHSO/auth/commit/acfbd701f9e08089b158e4a18d0b774529a745d4))
+* 🎸 create migration for search_tsv column ([0388779](https://github.com/NsdHSO/auth/commit/038877968becb7c716cedcfd00f6fda75a9608f5))
+
 # [1.27.0](https://github.com/NsdHSO/auth/compare/v1.26.0...v1.27.0) (2025-09-06)
 
 
