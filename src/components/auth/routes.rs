@@ -10,6 +10,7 @@ use crate::http_response::{http_response_builder, HttpCodeW};
 use actix_web::cookie::{time, Cookie, SameSite};
 use actix_web::dev::ConnectionInfo;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use crate::http_response::prepared_response::check_response_ok_or_return_error;
 
 #[post("/auth/register")]
 pub async fn register(
@@ -21,13 +22,7 @@ pub async fn register(
     let registration = service
         .register(Option::from(payload.0), conn_info, &service_config)
         .await;
-    match registration {
-        Ok(user) => {
-            let response = http_response_builder::ok(user);
-            Ok(HttpResponse::Ok().json(response))
-        }
-        Err(err) => Err(err),
-    }
+    check_response_ok_or_return_error(registration)
 }
 
 #[post("/auth/refresh")]
@@ -87,13 +82,8 @@ pub async fn verify_email(
     let verified = service
         .verify_email(info.into_inner().token, conn_info)
         .await;
-    match verified {
-        Ok(user) => {
-            let response = http_response_builder::ok(user);
-            Ok(HttpResponse::Ok().json(response))
-        }
-        Err(err) => Err(err),
-    }
+
+    check_response_ok_or_return_error(verified)
 }
 
 #[post("/auth/introspect")]

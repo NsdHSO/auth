@@ -23,6 +23,12 @@ impl UsersService {
     pub fn new(conn: &DatabaseConnection) -> Self {
         Self { conn: conn.clone() }
     }
+    
+    
+    pub async fn get_all(&self, payload: &AuthRequestBody) -> Result<Vec<Model>, CustomError> {
+        
+    }
+    
 
     pub async fn find(&self, field: &str, value: SearchValue) -> Result<Model, CustomError> {
         let query = match (field, value) {
