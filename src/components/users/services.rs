@@ -1,19 +1,20 @@
 use crate::components::users::enums::SearchValue;
-use crate::entity::users::{ActiveModel, AuthRequestBody, Column, Entity, Model};
-use crate::entity::UserStatus;
-use crate::entity::UserStatus::Active;
+use crate::entity::users::{
+    ActiveModel, AuthRequestBody, Column, Entity, Model, UserSearchBody, UserSearchResponseBody,
+};
+use crate::entity::UserStatus::{Active, PendingVerification};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use crate::utils::helpers::{hash_password, now_date_time_utc, verify_password};
 use actix_web::dev::ConnectionInfo;
 use sea_orm::prelude::DateTimeWithTimeZone;
+use sea_orm::sea_query::Expr;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, Set, Unchanged,
+    ActiveModelTrait, ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter,
+    QueryOrder, QuerySelect, Set, Unchanged,
 };
-use serde_json::{json, Value};
+use serde_json::{json, Value as JsonValue};
 use uuid::Uuid;
-use UserStatus::PendingVerification;
-
 #[derive(Clone)]
 pub struct UsersService {
     conn: DatabaseConnection,
@@ -23,13 +24,76 @@ impl UsersService {
     pub fn new(conn: &DatabaseConnection) -> Self {
         Self { conn: conn.clone() }
     }
-    
-    
-    pub async fn get_all(&self, payload: &AuthRequestBody) -> Result<Vec<Model>, CustomError> {
-        
-    }
-    
 
+    pub async fn get_all(
+        &self,
+        payload: &UserSearchBody,
+    ) -> Result<Vec<UserSearchResponseBody>, CustomError> {
+        let mut combined = Condition::any();
+        let mut any_substring = false;
+
+        if let Some(email) = &payload.email {
+            if !email.trim().is_empty() {
+                any_substring = true;
+                combined = combined.add(Column::Email.like(format!("%{}%", email)));
+            }
+        }
+        if let Some(username) = &payload.username {
+            if !username.trim().is_empty() {
+                any_substring = true;
+                combined = combined.add(Column::Username.like(format!("%{}%", username)));
+            }
+        }
+        if let Some(first_name) = &payload.first_name {
+            if !first_name.trim().is_empty() {
+                any_substring = true;
+                combined = combined.add(Column::FirstName.like(format!("%{}%", first_name)));
+            }
+        }
+        if let Some(last_name) = &payload.last_name {
+            if !last_name.trim().is_empty() {
+                any_substring = true;
+                combined = combined.add(Column::LastName.like(format!("%{}%", last_name)));
+            }
+        }
+
+        let fts_terms: Vec<String> = [
+            payload.email.clone(),
+            payload.username.clone(),
+            payload.first_name.clone(),
+            payload.last_name.clone(),
+        ]
+        .into_iter()
+        .flatten()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect();
+
+        if !fts_terms.is_empty() {
+            let terms = fts_terms.join(" ");
+            combined = combined.add(Expr::cust_with_values(
+                "search_tsv @@ plainto_tsquery('simple', $1)",
+                vec![sea_orm::Value::from(terms)],
+            ));
+            any_substring = true;
+        }
+
+        let mut query = Entity::find();
+        if any_substring {
+            query = query.filter(combined);
+        }
+        query = query.order_by_desc(Column::UpdatedAt);
+
+        let users = query
+            .all(&self.conn)
+            .await
+            .map_err(|e| CustomError::new(HttpCodeW::InternalServerError, e.to_string()))?
+            .into_iter()
+            .map(UserSearchResponseBody::from)
+            .collect::<Vec<UserSearchResponseBody>>();
+
+        Ok(users)
+    }
     pub async fn find(&self, field: &str, value: SearchValue) -> Result<Model, CustomError> {
         let query = match (field, value) {
             ("id", SearchValue::Uuid(uuid)) => Entity::find_by_id(uuid),
@@ -120,7 +184,7 @@ impl UsersService {
         ip_address: &String,
         user_model: Model,
     ) -> Result<Result<ActiveModel, CustomError>, Result<Option<Model>, CustomError>> {
-        if (user_model.needs_email_verification()) {
+        if user_model.needs_email_verification() {
             let mut active_user: ActiveModel = user_model.into();
             let new_login = json!({
                 "timestamp": now_date_time_utc(),
@@ -142,14 +206,14 @@ impl UsersService {
         Ok(check_pass)
     }
 
-    pub fn add_details_login(active_user: &mut ActiveModel, new_login: Value) {
-        let mut login_history: Vec<Value> = match &active_user.login_history {
-            Unchanged(Value::Array(array)) => array.clone(),
-            Set(Value::Array(array)) => array.clone(),
+    pub fn add_details_login(active_user: &mut ActiveModel, new_login: JsonValue) {
+        let mut login_history: Vec<JsonValue> = match &active_user.login_history {
+            Unchanged(JsonValue::Array(array)) => array.clone(),
+            Set(JsonValue::Array(array)) => array.clone(),
             _ => vec![],
         };
         login_history.push(new_login);
-        active_user.login_history = Set(Value::Array(login_history));
+        active_user.login_history = Set(JsonValue::Array(login_history));
     }
 
     pub async fn update(
@@ -206,7 +270,7 @@ impl UsersService {
             last_login: Set(None),
             created_at: Set(DateTimeWithTimeZone::from(now_date_time_utc())),
             updated_at: Set(DateTimeWithTimeZone::from(now_date_time_utc())),
-            login_history: Set(Value::Array(vec![new_login])),
+            login_history: Set(JsonValue::Array(vec![new_login])),
         }
     }
 }

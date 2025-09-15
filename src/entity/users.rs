@@ -22,6 +22,10 @@ pub struct Model {
 
     pub first_name: Option<String>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sea_orm(ignore)]
+    pub search_tsv: Option<String>,
+
     pub last_name: Option<String>,
 
     pub role: UserRole,
@@ -156,4 +160,30 @@ pub struct RegisterResponseBody {
     pub user_id: String,
     pub email: String,
     pub status: String,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+pub struct UserSearchBody {
+    pub email: Option<String>,
+    pub username: Option<String>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+}
+
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
+pub struct UserSearchResponseBody {
+    pub email: String,
+    pub username: String,
+    pub first_name: String,
+    pub last_name: String,
+}
+impl From<Model> for UserSearchResponseBody {
+    fn from(user: Model) -> Self {
+        UserSearchResponseBody {
+            username: user.username,
+            first_name: user.first_name.unwrap_or_default(),
+            email: user.email,
+            last_name: user.last_name.unwrap_or_default(),
+        }
+    }
 }

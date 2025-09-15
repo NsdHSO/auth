@@ -1,5 +1,5 @@
 use super::services::UsersService;
-use crate::entity::users::AuthRequestBody;
+use crate::entity::users::UserSearchBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
 use crate::http_response::prepared_response::check_response_ok_or_return_error;
 use actix_web::{get, post, web, HttpResponse};
@@ -12,7 +12,7 @@ pub async fn users(_service: web::Data<UsersService>) -> Result<HttpResponse, Cu
 }
 #[get("/users")]
 pub async fn get_users(
-    payload: ValidatedJson<AuthRequestBody>,
+    payload: ValidatedJson<UserSearchBody>,
     _service: web::Data<UsersService>,
 ) -> Result<HttpResponse, CustomError> {
     let service_instance = _service.get_ref();
