@@ -23,4 +23,5 @@ pub async fn get_users(
 
 pub fn init_routes(config: &mut web::ServiceConfig) {
     config.service(users);
+    config.service(get_users);
 }
