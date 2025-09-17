@@ -94,6 +94,7 @@ impl UsersService {
 
         Ok(users)
     }
+
     pub async fn find(&self, field: &str, value: SearchValue) -> Result<Model, CustomError> {
         let query = match (field, value) {
             ("id", SearchValue::Uuid(uuid)) => Entity::find_by_id(uuid),
@@ -131,6 +132,7 @@ impl UsersService {
             )),
         }
     }
+
     pub async fn create(
         &self,
         payload: AuthRequestBody,

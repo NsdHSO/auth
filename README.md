@@ -415,6 +415,9 @@ Below is a plain Markdown matrix (no Mermaid) of roles vs permissions.
 |-----------------------|:-----:|:---------:|:--------:|:----:|:-----:|
 | user.read             |   ✓   |     ✓     |          |      |       |
 | user.write            |   ✓   |           |          |      |       |
+| person.create         |   ✓   |     ✓     |          |      |       |
+| person.read           |   ✓   |     ✓     |          |  ✓   |   ✓   |
+| person.update         |   ✓   |           |          |      |       |
 | session.read          |   ✓   |     ✓     |          |      |       |
 | session.terminate     |   ✓   |     ✓     |          |      |       |
 | token.read            |   ✓   |           |          |  ✓   |       |
