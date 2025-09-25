@@ -1,4 +1,7 @@
+use crate::components::auth::functions::{compute_roles_and_permissions, generate_jwt_token};
 use crate::components::tokens::TokensService;
+use crate::components::users::enums::SearchValue;
+use crate::components::users::UsersService;
 use crate::config_service;
 use crate::entity::users::{AuthResponseBody, BodyToken};
 use crate::http_response::error_handler::CustomError;
@@ -6,9 +9,6 @@ use crate::http_response::HttpCodeW;
 use crate::http_response::HttpCodeW::InternalServerError;
 use actix_web::cookie::Cookie;
 use sea_orm::{DatabaseConnection, TransactionTrait};
-use crate::components::auth::functions::{compute_roles_and_permissions, generate_jwt_token};
-use crate::components::users::enums::SearchValue;
-use crate::components::users::UsersService;
 
 pub async fn refresh_logic(
     tokens_service: &TokensService,
@@ -17,15 +17,28 @@ pub async fn refresh_logic(
     cookie_refresh_token: Option<Cookie<'_>>,
 ) -> Result<Option<AuthResponseBody>, CustomError> {
     let refresh_token = match cookie_refresh_token {
-        None => return Err(CustomError::new(HttpCodeW::Unauthorized, "Missing refresh token".to_string())),
+        None => {
+            return Err(CustomError::new(
+                HttpCodeW::Unauthorized,
+                "Missing refresh token".to_string(),
+            ))
+        }
         Some(v) => v.value().to_string(),
     };
 
     let txn = match conn.begin().await {
         Ok(t) => t,
-        Err(e) => return Err(CustomError::new(InternalServerError, format!("Txn begin error: {e}"))),
+        Err(e) => {
+            return Err(CustomError::new(
+                InternalServerError,
+                format!("Txn begin error: {e}"),
+            ))
+        }
     };
-    let old_token_model = match tokens_service.is_token_available(&refresh_token, &txn).await {
+    let old_token_model = match tokens_service
+        .is_token_available(&refresh_token, &txn)
+        .await
+    {
         Ok(Some(model)) => model,
         Ok(None) => {
             return Err(CustomError::new(
@@ -40,10 +53,12 @@ pub async fn refresh_logic(
 
     let user_id = old_token_model.user_id;
 
-
     if let Err(e) = TokensService::revoke_token(old_token_model, &txn).await {
         let _ = txn.rollback().await;
-        return Err(CustomError::new(InternalServerError, format!("Token revoke error: {e}")));
+        return Err(CustomError::new(
+            InternalServerError,
+            format!("Token revoke error: {e}"),
+        ));
     }
 
     let (new_raw_refresh, _new_row) = match tokens_service
@@ -53,7 +68,10 @@ pub async fn refresh_logic(
         Ok(v) => v,
         Err(e) => {
             let _ = txn.rollback().await;
-            return Err(CustomError::new(InternalServerError, format!("Create new refresh token error: {e}")));
+            return Err(CustomError::new(
+                InternalServerError,
+                format!("Create new refresh token error: {e}"),
+            ));
         }
     };
 
@@ -61,7 +79,21 @@ pub async fn refresh_logic(
         Ok((r, p)) => (r, p),
         Err(e) => {
             let _ = txn.rollback().await;
-            return Err(CustomError::new(InternalServerError, format!("Failed to compute permissions: {e}")));
+            return Err(CustomError::new(
+                InternalServerError,
+                format!("Failed to compute permissions: {e}"),
+            ));
+        }
+    };
+
+    let user = match users_service.find("id", SearchValue::Uuid(user_id)).await {
+        Ok(u) => u,
+        Err(e) => {
+            let _ = txn.rollback().await;
+            return Err(CustomError::new(
+                InternalServerError,
+                format!("Failed to fetch user: {e}"),
+            ));
         }
     };
 
@@ -71,29 +103,27 @@ pub async fn refresh_logic(
         config_service().access_token_private_key.to_owned(),
         perms,
         roles,
+        user.email,
     ) {
         Ok(v) => v,
         Err(_) => {
             let _ = txn.rollback().await;
-            return Err(CustomError::new(InternalServerError, "Failed to generate access token".to_string()));
-        }
-    };
-
-    let user = match users_service.find("id", SearchValue::Uuid(user_id)).await {
-        Ok(u) => u,
-        Err(e) => {
-            let _ = txn.rollback().await;
-            return Err(CustomError::new(InternalServerError, format!("Failed to fetch user: {e}")));
+            return Err(CustomError::new(
+                InternalServerError,
+                "Failed to generate access token".to_string(),
+            ));
         }
     };
 
     if let Err(e) = txn.commit().await {
-        return Err(CustomError::new(InternalServerError, format!("Txn commit error: {e}")));
+        return Err(CustomError::new(
+            InternalServerError,
+            format!("Txn commit error: {e}"),
+        ));
     }
 
     Ok(Some(AuthResponseBody {
         body: BodyToken {
-            email: user.email,
             username: user.username,
             access_token: jwt.token.unwrap_or_default(),
         },

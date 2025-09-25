@@ -206,6 +206,7 @@ impl MigrationTrait for Migration {
                     .name("idx_users_email")
                     .table(Users::Table)
                     .col(Users::Email)
+                    .if_not_exists()
                     .to_owned()
             )
             .await?;
@@ -216,6 +217,7 @@ impl MigrationTrait for Migration {
                     .name("idx_users_username")
                     .table(Users::Table)
                     .col(Users::Username)
+                    .if_not_exists()
                     .to_owned()
             )
             .await?;

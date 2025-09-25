@@ -28,6 +28,7 @@ pub struct TokenClaims {
     pub token_uuid: String,
     pub perms: Vec<String>,
     pub roles: Vec<String>,
+    pub email: String,
     pub exp: i64,
     pub iat: i64,
     pub nbf: i64,
@@ -122,6 +123,7 @@ pub fn generate_jwt_token(
     private_key: String,
     perms: Vec<String>,
     roles: Vec<String>,
+    email: String,
 ) -> Result<TokenDetails, jsonwebtoken::errors::Error> {
     let bytes_private_key = general_purpose::STANDARD.decode(private_key).unwrap();
     let decoded_private_key = String::from_utf8(bytes_private_key).unwrap();
@@ -137,6 +139,7 @@ pub fn generate_jwt_token(
     let claims = TokenClaims {
         sub: token_details.user_id.to_string(),
         token_uuid: token_details.token_uuid.to_string(),
+        email,
         perms,
         roles,
         exp: token_details.expires_in.unwrap(),

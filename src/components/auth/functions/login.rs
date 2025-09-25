@@ -67,6 +67,7 @@ pub async fn login_logic(
                         config_service().access_token_private_key.to_owned(),
                         perms,
                         roles,
+                        update_model.email.clone(),
                     );
                     let (refresh_raw, _row) = tokens_service
                         .create_refresh_token_for_user(
@@ -77,7 +78,6 @@ pub async fn login_logic(
                     match jwt_token {
                         Ok(token_details) => Ok(Some(AuthResponseBody {
                             body: BodyToken {
-                                email: update_model.email.clone(),
                                 access_token: token_details.token.unwrap_or_default(),
                                 username: update_model.username.clone(),
                             },
