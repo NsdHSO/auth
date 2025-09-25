@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/NsdHSO/auth/compare/v1.28.0...v1.29.0) (2025-09-17)
+
+
+### Features
+
+* 🎸 added person_permissions ([08859ab](https://github.com/NsdHSO/auth/commit/08859abe67bb1353d59f62591e0dff879ff499d3))
+
 # [1.28.0](https://github.com/NsdHSO/auth/compare/v1.27.0...v1.28.0) (2025-09-15)
 
 
