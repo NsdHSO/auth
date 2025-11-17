@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/NsdHSO/auth/compare/v1.31.0...v1.32.0) (2025-11-17)
+
+
+### Features
+
+* 🎸 tried to leave the railway access the server ([e5cda34](https://github.com/NsdHSO/auth/commit/e5cda34fe513f8bcf117c7499baaadfb56f66f0f))
+
 # [1.31.0](https://github.com/NsdHSO/auth/compare/v1.30.0...v1.31.0) (2025-11-17)
 
 
