@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/NsdHSO/auth/compare/v1.29.0...v1.30.0) (2025-09-25)
+
+
+### Features
+
+* 🎸 added the email in jwtToken ([eb3ec48](https://github.com/NsdHSO/auth/commit/eb3ec4867f535ea85cf0692700f829611ce7fe76))
+
 # [1.29.0](https://github.com/NsdHSO/auth/compare/v1.28.0...v1.29.0) (2025-09-17)
 
 
