@@ -61,8 +61,10 @@ async fn main() -> std::io::Result<()> {
                     && origin.to_str().unwrap().contains("vercel")
             })
             .allowed_origin("https://nsdhso.github.io")
-            .allowed_origin("https://quiz-backend-production-da19.up.railway.app/")
-            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+ .allowed_origin_fn(|origin, _req| {
+                origin.as_bytes().starts_with(b"https://")
+                    && origin.to_str().unwrap().contains("railway")
+            })            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
             .allowed_headers(vec![header::CONTENT_TYPE, header::ACCEPT, header::AUTHORIZATION])
             .supports_credentials();
 
