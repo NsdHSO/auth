@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/NsdHSO/auth/compare/v1.30.0...v1.31.0) (2025-11-17)
+
+
+### Features
+
+* 🎸 added new origin ([5850d40](https://github.com/NsdHSO/auth/commit/5850d4085b10f72a42203ae31ea77d310cbce618))
+
 # [1.30.0](https://github.com/NsdHSO/auth/compare/v1.29.0...v1.30.0) (2025-09-25)
 
 
