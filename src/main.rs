@@ -1,4 +1,5 @@
 use crate::components::auth::AuthService;
+use crate::components::config::ConfigService;
 use crate::components::tokens::TokensService;
 use crate::components::users::UsersService;
 use actix_cors::Cors;
@@ -10,21 +11,18 @@ use dotenv::dotenv;
 use env_logger::{Builder, Env};
 use listenfd::ListenFd;
 use std::env;
-use crate::components::config::ConfigService;
 
 mod components;
 mod db;
 mod entity;
 mod http_response;
 mod utils;
-fn config_service() -> ConfigService {
-    ConfigService::new().clone()
-}
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    let conn: sea_orm::DatabaseConnection = db::config::init(config_service().database_url)
+    let cfg = ConfigService::new().await;
+    let conn: sea_orm::DatabaseConnection = db::config::init(cfg.clone().database_url)
         .await
         .expect("Failed to initialize database connection"); // Initialize connection here
 
@@ -61,16 +59,21 @@ async fn main() -> std::io::Result<()> {
                     && origin.to_str().unwrap().contains("vercel")
             })
             .allowed_origin("https://nsdhso.github.io")
- .allowed_origin_fn(|origin, _req| {
+            .allowed_origin_fn(|origin, _req| {
                 origin.as_bytes().starts_with(b"https://")
                     && origin.to_str().unwrap().contains("railway")
-            })            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
-            .allowed_headers(vec![header::CONTENT_TYPE, header::ACCEPT, header::AUTHORIZATION])
+            })
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+            .allowed_headers(vec![
+                header::CONTENT_TYPE,
+                header::ACCEPT,
+                header::AUTHORIZATION,
+            ])
             .supports_credentials();
 
         App::new()
             .wrap(cors)
-            .app_data(web::Data::new(config_service()))
+            .app_data(web::Data::new(cfg.clone()))
             .app_data(web::Data::new(data_base_conn.clone()))
             .app_data(web::Data::new(user_service.clone()))
             .app_data(web::Data::new(auth_service.clone()))
@@ -96,5 +99,3 @@ async fn main() -> std::io::Result<()> {
 
     server.run().await
 }
-
-

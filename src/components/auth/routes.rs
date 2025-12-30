@@ -2,15 +2,14 @@ use super::services::AuthService;
 use crate::components::auth::functions::verify_jwt_token;
 use crate::components::auth::local_enum::Info;
 use crate::components::config::ConfigService;
-use crate::config_service;
 use crate::entity::tokens::{IntrospectRequest, IntrospectResponse};
 use crate::entity::users::AuthRequestBody;
 use crate::http_response::error_handler::{CustomError, ValidatedJson};
+use crate::http_response::prepared_response::check_response_ok_or_return_error;
 use crate::http_response::{http_response_builder, HttpCodeW};
 use actix_web::cookie::{time, Cookie, SameSite};
 use actix_web::dev::ConnectionInfo;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
-use crate::http_response::prepared_response::check_response_ok_or_return_error;
 
 #[post("/auth/register")]
 pub async fn register(
@@ -30,15 +29,16 @@ pub async fn refresh(
     req: HttpRequest,
     service: web::Data<AuthService>,
     _conn_info: ConnectionInfo,
+    config_service: web::Data<ConfigService>,
 ) -> Result<HttpResponse, CustomError> {
-    let refresh = service.refresh(req.cookie("refresh_token"));
+    let refresh = service.refresh(req.cookie("refresh_token"), &config_service);
     match refresh.await {
         Ok(user) => {
             let user = user.unwrap();
             let response = http_response_builder::ok(user.body);
             let refresh_cookie = Cookie::build("refresh_token", user.refresh_token)
                 .path("/")
-                .max_age(time::Duration::days(config_service().refresh_token_max_age))
+                .max_age(time::Duration::days(config_service.refresh_token_max_age))
                 .same_site(SameSite::None)
                 .http_only(true)
                 .secure(true)
@@ -54,15 +54,16 @@ pub async fn login(
     payload: ValidatedJson<AuthRequestBody>,
     service: web::Data<AuthService>,
     _conn_info: ConnectionInfo,
+    config_service: web::Data<ConfigService>,
 ) -> Result<HttpResponse, CustomError> {
-    let registration = service.login(payload.0, _conn_info).await;
+    let registration = service.login(payload.0, _conn_info, &config_service).await;
     match registration {
         Ok(payload_auth) => {
             let payload_auth = payload_auth.unwrap();
             let response = http_response_builder::ok(payload_auth.body);
             let refresh_cookie = Cookie::build("refresh_token", payload_auth.refresh_token)
                 .path("/")
-                .max_age(time::Duration::days(config_service().refresh_token_max_age))
+                .max_age(time::Duration::days(config_service.refresh_token_max_age))
                 .same_site(SameSite::None)
                 .http_only(true)
                 .secure(true)
@@ -89,8 +90,9 @@ pub async fn verify_email(
 #[post("/auth/introspect")]
 pub async fn introspect(
     payload: web::Json<IntrospectRequest>,
+    config_service: web::Data<ConfigService>,
 ) -> Result<HttpResponse, CustomError> {
-    let public_key_b64 = config_service().access_token_public_key.clone();
+    let public_key_b64 = config_service.access_token_public_key.clone();
     match verify_jwt_token(public_key_b64, &payload.token) {
         Ok(details) => Ok(HttpResponse::Ok().json(IntrospectResponse {
             active: true,

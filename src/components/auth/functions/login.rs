@@ -2,13 +2,13 @@ use crate::components::auth::functions::{compute_roles_and_permissions, generate
 use crate::components::tokens::TokensService;
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
-use crate::config_service;
 use crate::entity::users::{ActiveModel, AuthRequestBody, AuthResponseBody, BodyToken};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use actix_web::dev::ConnectionInfo;
 use sea_orm::{ActiveModelTrait, DatabaseConnection};
 use serde_json::json;
+use crate::components::config::ConfigService;
 use crate::utils::helpers::now_date_time_utc;
 
 pub async fn login_logic(
@@ -17,6 +17,7 @@ pub async fn login_logic(
     conn_info: ConnectionInfo,
     conn: &DatabaseConnection,
     tokens_service: &TokensService,
+    config_service: &ConfigService,
 ) -> Result<Result<Option<AuthResponseBody>, CustomError>, CustomError> {
     let ip_address = conn_info
         .realip_remote_addr()
@@ -61,10 +62,11 @@ pub async fn login_logic(
                             ));
                         }
                     };
+                    let private_key = config_service.access_token_private_key.to_string();
                     let jwt_token = generate_jwt_token(
                         update_model.id,
-                        config_service().access_token_max_age,
-                        config_service().access_token_private_key.to_owned(),
+                        config_service.access_token_max_age,
+                        private_key.to_owned(),
                         perms,
                         roles,
                         update_model.email.clone(),
@@ -72,7 +74,7 @@ pub async fn login_logic(
                     let (refresh_raw, _row) = tokens_service
                         .create_refresh_token_for_user(
                             update_model.id,
-                            config_service().refresh_token_max_age,
+                            config_service.refresh_token_max_age,
                         )
                         .await?;
                     match jwt_token {

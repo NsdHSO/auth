@@ -2,19 +2,20 @@ use crate::components::auth::functions::{compute_roles_and_permissions, generate
 use crate::components::tokens::TokensService;
 use crate::components::users::enums::SearchValue;
 use crate::components::users::UsersService;
-use crate::config_service;
 use crate::entity::users::{AuthResponseBody, BodyToken};
 use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use crate::http_response::HttpCodeW::InternalServerError;
 use actix_web::cookie::Cookie;
 use sea_orm::{DatabaseConnection, TransactionTrait};
+use crate::components::config::ConfigService;
 
 pub async fn refresh_logic(
     tokens_service: &TokensService,
     users_service: &UsersService,
     conn: &DatabaseConnection,
     cookie_refresh_token: Option<Cookie<'_>>,
+    config_service: &ConfigService
 ) -> Result<Option<AuthResponseBody>, CustomError> {
     let refresh_token = match cookie_refresh_token {
         None => {
@@ -62,7 +63,7 @@ pub async fn refresh_logic(
     }
 
     let (new_raw_refresh, _new_row) = match tokens_service
-        .create_refresh_token_for_user_txn(user_id, config_service().refresh_token_max_age, &txn)
+        .create_refresh_token_for_user_txn(user_id, config_service.refresh_token_max_age, &txn)
         .await
     {
         Ok(v) => v,
@@ -99,8 +100,8 @@ pub async fn refresh_logic(
 
     let jwt = match generate_jwt_token(
         user_id,
-        config_service().access_token_max_age,
-        config_service().access_token_private_key.to_owned(),
+        config_service.access_token_max_age,
+        config_service.access_token_private_key.to_owned(),
         perms,
         roles,
         user.email,

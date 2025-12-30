@@ -23,14 +23,13 @@ pub struct ConfigService {
     pub synchronize: bool,
     pub auto_migrate: bool,
     pub email_address: String,
-    pub email_password: String,
     pub smtp_password: String,
     pub smtp_transport: String,
     pub port_host: String,
 }
 
 impl ConfigService {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         let database_url = get_env_var("DATABASE_URL");
 
         let access_token_private_key = get_env_var("ACCESS_TOKEN_PRIVATE_KEY");
@@ -49,7 +48,6 @@ impl ConfigService {
         let synchronize = get_env_var("SYNCHRONIZE").parse::<bool>().unwrap();
         let auto_migrate = get_env_var("AUTO_MIGRATE").parse::<bool>().unwrap();
         let email_address = get_env_var("EMAIL_ADDRESS");
-        let email_password = get_env_var("EMAIL_PASSWORD");
         let smtp_password = get_env_var("SMTP_PASSWORD");
         let smtp_transport = get_env_var("SMTP_TRANSPORT");
         let port_host = get_env_var("PORT_HOST");
@@ -71,7 +69,6 @@ impl ConfigService {
             synchronize,
             auto_migrate,
             email_address,
-            email_password,
             smtp_password,
             smtp_transport,
             port_host,

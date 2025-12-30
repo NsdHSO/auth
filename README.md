@@ -406,6 +406,13 @@ GET /v1/health/detailed         # Detailed health status
 - `HOST` - Server host (default: 127.0.0.1)
 - `PORT` - Server port (default: 4100)
 - `RUST_LOG` - Log level (default: debug)
+  ### 1) create keys (PEM files)
+  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwtRS256.key
+  openssl rsa -in jwtRS256.key -pubout -out jwtRS256.key.pub
+
+  ### 2) Base64 encode to one line (no newlines)
+  base64 < jwtRS256.key     | tr -d '\n' > jwtRS256.key.b64
+  base64 < jwtRS256.key.pub | tr -d '\n' > jwtRS256.key.pub.b64
 
 ## RBAC: Roles & Permissions Matrix
 

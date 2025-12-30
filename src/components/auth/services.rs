@@ -36,12 +36,14 @@ impl AuthService {
     pub async fn refresh(
         &self,
         cookie_refresh_token: Option<Cookie<'_>>,
+        config_service: &ConfigService
     ) -> Result<Option<AuthResponseBody>, CustomError> {
         refresh_logic(
             &self.tokens_service,
             &self.users_service,
             &self.conn,
             cookie_refresh_token,
+            config_service
         )
         .await
     }
@@ -113,6 +115,7 @@ impl AuthService {
         &self,
         payload: AuthRequestBody,
         conn_info: ConnectionInfo,
+        config_service: &ConfigService,
     ) -> Result<Option<AuthResponseBody>, CustomError> {
         login_logic(
             &self.users_service,
@@ -120,6 +123,7 @@ impl AuthService {
             conn_info,
             &self.conn,
             &self.tokens_service,
+            &config_service
         )
         .await?
     }
