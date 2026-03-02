@@ -1,3 +1,10 @@
+# [1.33.0](https://github.com/NsdHSO/auth/compare/v1.32.0...v1.33.0) (2026-03-02)
+
+
+### Features
+
+* 🎸 added run the email not fake in production ([216c521](https://github.com/NsdHSO/auth/commit/216c5210be729583e7b70161417d625a19d235b2))
+
 # [1.32.0](https://github.com/NsdHSO/auth/compare/v1.31.0...v1.32.0) (2025-11-17)
 
 
