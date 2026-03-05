@@ -8,6 +8,10 @@ publish = false
 name = "migration"
 path = "src/lib.rs"
 
+[[bin]]
+name = "setup_auth_schema"
+path = "src/bin/setup_auth_schema.rs"
+
 
 [dependencies]
 async-std = { version = "1", features = ["attributes", "tokio1"] }

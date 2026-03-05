@@ -9,7 +9,16 @@ impl MigrationTrait for Migration {
     async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
 
+        // Ensure auth schema exists
+        println!("Creating auth schema...");
+        db.execute(Statement::from_string(
+            manager.get_database_backend(),
+            "CREATE SCHEMA IF NOT EXISTS auth;".to_string(),
+        )).await?;
+        println!("Auth schema created successfully");
+
         // Create enum types for system
+        println!("Creating user_role enum...");
         db.execute(Statement::from_string(
             manager.get_database_backend(),
             r#"DO $$ 
@@ -57,14 +66,18 @@ impl MigrationTrait for Migration {
                 END IF;
             END $$;"#,
         )).await?;
+        println!("All enum types created successfully");
 
         // Ensure types in public are resolvable alongside auth
+        println!("Setting search_path to 'auth, public'...");
         db.execute(Statement::from_string(
             manager.get_database_backend(),
             "SET search_path TO auth, public;",
         )).await?;
+        println!("Search path set successfully");
 
         // Create users table
+        println!("Creating users table...");
         manager
             .create_table(
                 Table::create()

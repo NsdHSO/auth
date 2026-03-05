@@ -16,12 +16,14 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   exit 1
 fi
 
-# Ask for schema (e.g., auth or public), default to 'auth'
-read -r -p "Database schema to use [auth] (e.g., auth or public): " DB_SCHEMA
-DB_SCHEMA="${DB_SCHEMA:-auth}"
+echo "Setting up auth schema..."
+# First, create the auth schema so SeaORM can use it for migration tracking
+cargo run --quiet --bin setup_auth_schema --manifest-path migration/Cargo.toml
 
-echo "Running database migrations against schema: ${DB_SCHEMA} ..."
-# Execute without printing the URL to avoid exposing credentials
-cargo run --manifest-path migration/Cargo.toml -- --database-url "$DATABASE_URL" --database-schema "$DB_SCHEMA"
+echo ""
+echo "Running database migrations in auth schema..."
+# Now run migrations WITH --database-schema so SeaORM uses auth.seaql_migrations
+# This keeps auth migrations separate from any public schema migrations
+cargo run --bin migration --manifest-path migration/Cargo.toml -- --database-url "$DATABASE_URL" --database-schema auth
 
 echo "Migrations completed!"

@@ -141,6 +141,7 @@ pub struct AuthRequestBody {
     pub password: String,
     pub first_name: Option<String>,
     pub last_name: Option<String>,
+    pub notes: Option<String>,
 }
 
 #[derive(Default, Debug, Serialize, Deserialize, Clone)]
