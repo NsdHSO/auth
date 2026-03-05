@@ -7,7 +7,7 @@ use crate::http_response::error_handler::CustomError;
 use crate::http_response::HttpCodeW;
 use actix_web::dev::ConnectionInfo;
 use sea_orm::{ActiveModelTrait, DatabaseConnection};
-use serde_json::json;
+use serde_json::{json, Value as JsonValue};
 use crate::components::config::ConfigService;
 use crate::utils::helpers::now_date_time_utc;
 
@@ -28,6 +28,10 @@ pub async fn login_logic(
         .find("email", SearchValue::String(payload.email.to_string()))
         .await;
     let user_model = user?;
+
+    // Clone payload.notes before moving payload
+    let payload_notes = payload.notes.clone();
+
     let check_pass = users_service
         .check_credentials_and_email_verification(payload, &ip_address, user_model)
         .await
@@ -44,11 +48,31 @@ pub async fn login_logic(
     Ok(match check_pass {
         Ok(model) => {
             let mut active_model: ActiveModel = model;
-            let new_login = json!({
+
+            // Build login entry with timestamp and ip_address
+            let mut new_login = json!({
                 "timestamp": now_date_time_utc(),
-                "notes": "User Logged",
                 "ip_address": ip_address,
             });
+
+            // If payload has notes, try to parse it as JSON and spread properties
+            if let Some(notes_str) = payload_notes {
+                if let Ok(notes_json) = serde_json::from_str::<JsonValue>(&notes_str) {
+                    if let JsonValue::Object(notes_obj) = notes_json {
+                        // Spread all properties from the parsed notes JSON
+                        for (key, value) in notes_obj {
+                            new_login[key] = value;
+                        }
+                    }
+                } else {
+                    // If parsing fails, treat it as a plain string note
+                    new_login["notes"] = json!(notes_str);
+                }
+            }
+
+            // Always add status field
+            new_login["status"] = json!("User Logged");
+
             UsersService::add_details_login(&mut active_model, new_login);
             let update = active_model.update(conn).await;
             match update {
