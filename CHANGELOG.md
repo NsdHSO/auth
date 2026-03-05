@@ -1,3 +1,12 @@
+# [1.33.0](https://github.com/NsdHSO/auth/compare/v1.32.0...v1.33.0) (2026-03-05)
+
+
+### Features
+
+* 🎸 added migraition create schema ([8fe6b25](https://github.com/NsdHSO/auth/commit/8fe6b25a1feb2363a7105ecdabf179ae4c3984fe))
+* 🎸 added migraition create schema ([54c06d2](https://github.com/NsdHSO/auth/commit/54c06d27f0f88edb1a6092f2eb7ccae86c278848))
+* 🎸 added run the email not fake in production ([954c5dc](https://github.com/NsdHSO/auth/commit/954c5dcf51239c85416734ca7cff36fae75c2a34))
+
 # [1.33.0](https://github.com/NsdHSO/auth/compare/v1.32.0...v1.33.0) (2026-03-02)
 
 
